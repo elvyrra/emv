@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv='cache-control' content='no-cache' />
+        <meta http-equiv='expires' content='0' />
+        <meta http-equiv='pragma' content='no-cache' />
+
+        <style>
+            .red {
+                color : red;
+            }
+
+            .bold  {
+                font-weight: bold;
+            }
+
+            .italic {
+                font-style: italic;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1 e-show="show" e-class="classname" e-style="{border : '1px solid ' + borderColor}">Titre de la page</h1>
+
+        <form e-submit="submit">
+            <div>Afficher le texte <input type="checkbox" e-value="show" /></div>
+            <div>Classe du texte  :
+                <input type="radio" name="classname" value="red" e-value="classname" /> Red <br />
+                <input type="radio" name="classname" value="bold" e-value="classname" /> Bold <br />
+                <input type="radio" name="classname" value="italic" e-value="classname" /> Italic <br />
+            </div>
+
+            <div> border-color : <input type="text" e-value="borderColor" /></div>
+
+            <fieldset>
+                <legend> Pour le texte ci-dessous </legend>
+                <div contenteditable="${contenteditable}" e-focus="focus" e-html="content"> Salut </div>
+
+                <div>Content editable<input type="checkbox" e-value="contenteditable" /> </div>
+                <div>Disabled : <input type="checkbox" e-value="disabled" /> </div>
+                <div>Value : <input type="text" e-input="content" e-disabled="disabled"  /></div>
+                <div>Focus : <input type="checkbox" e-value="focus" /></div>
+            </fieldset>
+
+            <fieldset e-on="{mouseover : colorize}">
+                <legend> Options </legend>
+                <select e-options="{$data : options, $value : 'code', $label : 'label'}" e-value="selected" size="15"></select>
+                <span e-text="selected"></span>
+
+                <div e-with="newOption">
+                    value <input type="text" e-value="code" /> /
+                    label : <input type="text" e-value="label" />
+                    <button e-click="add" type="button"> Ajouter </button>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>e-value avec un textarea</legend>
+                <textarea e-value="fulltext"></textarea>
+                <div e-html="fulltext"></div>
+            </fieldset>
+
+
+            <fieldset>
+                <legend>e-input avec un textarea</legend>
+                <textarea e-input="fulltext2"></textarea>
+                <div>!{fulltext2}</div>
+            </fieldset>
+
+
+            <fieldset>
+                <legend>Writable computed</legend>
+                <div>Firstname <input type="text" e-value="firstname" /></div>
+                <div>lastname <input type="text" e-value="lastname" /></div>
+                <div>Fullname <input type="text" e-value="fullname" /></div>
+            </fieldset>
+        </form>
+
+
+        <input type="checkbox" e-value="display" />
+        <template id="item">
+            <span e-if="isFolder">+</span> <span e-text="name"></span>(<span e-text="size"></span>) => <span e-text="extension"></span>
+
+            <ul e-if="isFolder">
+                <li e-each="children">
+                    <div e-template="'item'"></div>
+                </li>
+            </ul>
+        </template>
+
+
+        <div e-with="Root" e-template="'item'"></div>
+
+        <div e-unless="display"> if est à false </div>
+
+
+        <script type="text/javascript" src="../lib/emv.js"></script>
+        <script type="text/javascript" src="js/test.js"></script>
+    </body>
+</html>
