@@ -415,6 +415,7 @@ const emv = new EMV({
 });
 
 emv.$apply();
+```
 
 2. The complex notation
 The directive can be written as an object that can contain the following properties :
@@ -697,8 +698,9 @@ Note that this function can be applied on sub objects of an EMV instance.
 
 ## (static) EMV.config
 This object contains the following properties :
+
 | Property | Default | Description |
-| ---      | ---     | ---         |
+|---|---|---|
 | attributePrefix | `'e-'` | The prefix for directives attributes |
 | delimiters | `['${', '}']` | The delimiters used to parse text handlebars directives |
 | htmlDelimiters | `['!{', '}']` | The delimiters used to parse HTML handlebars directives |
