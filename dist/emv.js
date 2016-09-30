@@ -586,11 +586,11 @@
 
         /**
          * Stop to watch on a property modifications
-         * @param  {string}   prop          The property name
-         * @param  {Function} handlerUID    The handler uid to remove from watchers. If not set,
-         *                                  all watchers on this property are unbound
+         * @param  {string}   prop       The property name
+         * @param  {Function} handler    The handler uid to remove from watchers. If not set,
+         *                               all watchers on this property are unbound
          */
-        $unwatch(prop, handlerUID) {
+        $unwatch(prop, handler) {
             let propSteps = prop.split('.'),
                 observable,
                 finalProp = propSteps.pop();
@@ -602,8 +602,8 @@
             });
 
             if(observable.$watchers[finalProp]) {
-                if(handlerUID) {
-                    delete observable.$watchers[finalProp][handlerUID];
+                if(handler) {
+                    delete observable.$watchers[finalProp][handler.uid];
                 }
                 else {
                     observable.$watchers[finalProp] = {};
@@ -1427,10 +1427,6 @@
      * Dom maniuplation directives
      */
     EMV.directive('each', {
-        options : {
-            comments : true
-        },
-
         init : function(element, parameters) {
             initElementPreviousSibliings(element);
 
@@ -1618,7 +1614,6 @@
 
     EMV.config = {
         attributePrefix : 'e',
-        templateEngine : '',
         delimiters : ['${', '}'],
         htmlDelimiters : ['!{', '}']
     };
