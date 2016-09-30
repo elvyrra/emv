@@ -124,7 +124,6 @@ module.exports = {
         'no-undef-init'              : 2,
         'no-undefined'               : 0,
         'no-unused-vars'             : [2, {'vars' : 'all', 'args' : 'after-used'}],
-        'no-use-before-define'       : 2,
 
         // Node.js and CommonJS
         'callback-return'       : [2, ['callback', 'cb', 'next']],

@@ -1,0 +1,9 @@
+<html>
+    <body>
+        <div id="string-attr" e-attr="'contenteditable=' + editable">Hello World</div>
+        <div id="object-attr" e-attr="{contenteditable : editable ? 'true' : false}">Hello World</div>
+        <div id="inline-attr" contenteditable="${ editable.toString() }">Hello World</div>
+
+        <div id="mixed-attr" e-attr="{'data-toggle' : toggle}" data-placement="${placement}"></div>
+    </body>
+</html>

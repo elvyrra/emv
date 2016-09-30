@@ -1,49 +1,82 @@
 /*global define, module, exports*/
 /* eslint no-invalid-this:0 */
 
-/*!
+/**
  * emv.js v1.0.0
- * 2016 Sébastien Lecocq
- * Released under the MIT License.
+ *
+ * @author Elvyrra S.A.S
+ * @license http://rem.mit-license.org/ MIT
  */
 'use strict';
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-(function (global, factory) {
-    if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && typeof module !== 'undefined') {
+(function(global, factory) {
+    if(typeof exports === 'object' && typeof module !== 'undefined') {
         module.exports = factory();
-    } else if (typeof define === 'function' && define.amd) {
+    }
+    else if (typeof define === 'function' && define.amd) {
         define(factory);
-    } else {
+    }
+    else {
         global.EMV = factory();
     }
-})(undefined, function () {
-    var executingComputed = null,
+})(this, function() {
+    let executingComputed = null,
         executingDirective = null,
         creatingContext = false;
 
-    var reservedWords = ['break', 'case', 'catch', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'finally', 'for', 'if', 'in', 'instanceof', 'new', 'return', 'switch', 'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'class', 'enum', 'export', 'extends', 'import', 'super', 'implements', 'interface', 'let', 'package', 'private', 'protected', 'public', 'static', 'yield'];
+    const reservedWords = [
+        'break',
+        'case',
+        'catch',
+        'continue',
+        'debugger',
+        'default',
+        'delete',
+        'do',
+        'else',
+        'finally',
+        'for',
+        'if',
+        'in',
+        'instanceof',
+        'new',
+        'return',
+        'switch',
+        'throw',
+        'try',
+        'typeof',
+        'var',
+        'void',
+        'while',
+        'with',
+        'class',
+        'enum',
+        'export',
+        'extends',
+        'import',
+        'super',
+        'implements',
+        'interface',
+        'let',
+        'package',
+        'private',
+        'protected',
+        'public',
+        'static',
+        'yield'
+    ];
 
-    var reservedWordsRegex = new RegExp('\\b(' + reservedWords.join('|') + ')\\b', 'g');
+    const reservedWordsRegex = new RegExp(`\\b(${reservedWords.join('|')})\\b`, 'g');
 
     /**
      * Generate a unique id
      * @returns {[type]} [description]
      */
     function guid() {
-        var s4 = function s4() {
-            return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+        const s4 = () => {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
         };
 
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
@@ -56,9 +89,15 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
      * @returns {boolean} True if the variable is primitive
      */
     function isPrimitive(variable) {
-        var types = ['string', 'number', 'boolean', 'undefined', 'symbol'];
+        let types = [
+            'string',
+            'number',
+            'boolean',
+            'undefined',
+            'symbol'
+        ];
 
-        return types.indexOf(typeof variable === 'undefined' ? 'undefined' : _typeof(variable)) !== -1 || variable === null;
+        return types.indexOf(typeof variable) !== -1 || variable === null;
     }
 
     /**
@@ -70,37 +109,27 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     }
 
+
     /**
      * This class describes errors thrown by EMV
      */
-
-    var EMVError = function (_Error) {
-        _inherits(EMVError, _Error);
-
+    class EMVError extends Error {
         /**
          * Constructor
          * @param   {string} message The error message
          */
-        function EMVError(message) {
-            _classCallCheck(this, EMVError);
+        constructor(message) {
+            let fullMessage = `EMV Error : ${message}`;
 
-            var fullMessage = 'EMV Error : ' + message;
-
-            return _possibleConstructorReturn(this, (EMVError.__proto__ || Object.getPrototypeOf(EMVError)).call(this, fullMessage));
+            super(fullMessage);
         }
-
-        return EMVError;
-    }(Error);
+    }
 
     /**
      * This class describes the behavior of observable data in EMV engine.
      * This is the most important class in EMV
      */
-
-
-    var EMVObservable = function (_Array) {
-        _inherits(EMVObservable, _Array);
-
+    class EMVObservable {
         /**
          * Constructor
          * @param  {Object} initValue       The initial value to set on the observable
@@ -108,47 +137,41 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
          * @param  {EMVObservable} $parent  The parent object, containing this one
          * @param  {string} upperKey        The key to retrieve this object from the parent object
          */
-        function EMVObservable(initValue, $root, $parent, upperKey) {
-            var _ret;
+        constructor(initValue, $root, $parent, upperKey) {
+            this.$callers = {};
+            this.$directives = {};
+            this.$watchers = {};
+            this.$root = $root || this;
+            this.$parent = $parent;
+            this.$computed = {};
+            this.$this = this;
 
-            _classCallCheck(this, EMVObservable);
-
-            var _this2 = _possibleConstructorReturn(this, (EMVObservable.__proto__ || Object.getPrototypeOf(EMVObservable)).call(this));
-
-            _this2.$callers = {};
-            _this2.$directives = {};
-            _this2.$watchers = {};
-            _this2.$root = $root || _this2;
-            _this2.$parent = $parent;
-            _this2.$computed = {};
-            _this2.$this = _this2;
-
-            var proxyHandler = {
-                get: function (object, key) {
-                    if (typeof key !== 'string') {
+            let proxyHandler = {
+                get : function(object, key) {
+                    if(typeof key !== 'string') {
                         return object[key];
                     }
 
-                    var value = object[key];
+                    let value = object[key];
 
-                    if (key.substr(0, 1) === '$') {
+                    if(key.substr(0, 1) === '$') {
                         return this[key];
                     }
 
-                    if (this.$root && typeof value !== 'function') {
-                        if (executingComputed) {
-                            if (!this.$callers[key]) {
+                    if(this.$root && typeof value !== 'function') {
+                        if(executingComputed) {
+                            if(!this.$callers[key]) {
                                 this.$callers[key] = {};
                             }
                             // Find if this computed already registred in the observable computed
-                            if (!this.$callers[key][executingComputed.uid]) {
-                                Object.keys(this.$root.$computed).every(function (computedName) {
-                                    if (this.$root.$computed[computedName] === executingComputed) {
+                            if(!this.$callers[key][executingComputed.uid]) {
+                                Object.keys(this.$root.$computed).every(function(computedName) {
+                                    if(this.$root.$computed[computedName] === executingComputed) {
                                         this.$callers[key][executingComputed.uid] = {
-                                            property: computedName,
-                                            reader: executingComputed.reader,
-                                            writer: executingComputed.writer,
-                                            object: executingComputed.object
+                                            property : computedName,
+                                            reader : executingComputed.reader,
+                                            writer : executingComputed.writer,
+                                            object : executingComputed.object
                                         };
 
                                         return false;
@@ -159,102 +182,113 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                             }
                         }
 
-                        if (executingDirective) {
-                            if (!this.$directives[key]) {
+                        if(executingDirective) {
+                            if(!this.$directives[key]) {
                                 this.$directives[key] = {};
                             }
 
-                            if (!this.$directives[key][executingDirective.uid]) {
+                            if(!this.$directives[key][executingDirective.uid]) {
                                 this.$directives[key][executingDirective.uid] = executingDirective;
                             }
                         }
                     }
 
                     return value;
-                }.bind(_this2),
+                }.bind(this),
 
-                set: function (object, key, value) {
-                    if (typeof key !== 'string') {
+                set : function(object, key, value) {
+                    if(typeof key !== 'string') {
                         return true;
                     }
 
-                    var notifyParent = false;
-                    var internalKey = key.substr(0, 1) === '$';
 
-                    if (!(key in object) && !creatingContext) {
+                    let notifyParent = false;
+                    let internalKey = key.substr(0, 1) === '$';
+
+                    if(!(key in object) && !creatingContext) {
                         // The property is created on the object, it means the parent object has been modified
                         notifyParent = true;
                     }
 
-                    if (internalKey || typeof value === 'function') {
+                    if(internalKey || typeof value === 'function') {
                         object[key] = value;
 
                         return true;
                     }
 
-                    var oldValue = object[key];
+                    let oldValue = object[key];
 
-                    if (!isPrimitive(value) && !(value instanceof EMVObservable)) {
-                        object[key] = new EMVObservable(value, this.$root || object, object, key);
-                    } else {
+                    if(!isPrimitive(value) && !(value instanceof EMVObservable)) {
+                        if(Array.isArray(value)) {
+                            object[key] = new EMVObservableArray(value, this.$root || object, object, key);
+                        }
+                        else {
+                            object[key] = new EMVObservable(value, this.$root || object, object, key);
+                        }
+                    }
+                    else {
                         object[key] = value;
-                        if (value instanceof EMV) {
+                        if(value instanceof EMV) {
                             value.$root = this.$root || object;
                             value.$parent = object;
                         }
                     }
 
-                    if (this.$computed[key] && this.$computed[key].writer) {
+                    if(this.$computed[key] && this.$computed[key].writer) {
                         try {
                             this.$computed[key].writer(object, value, oldValue);
-                        } catch (err) {}
+                        }
+                        catch(err) {}
                     }
-                    if (oldValue !== value || Array.isArray(object) && key === 'length') {
+                    if(oldValue !== value) {
                         this.$notifySubscribers(key, value, oldValue);
 
-                        if (notifyParent && this.$parent) {
+                        if(notifyParent && this.$parent) {
                             this.$parent.$notifySubscribers(upperKey, this.$parent);
                         }
                     }
 
                     return true;
-                }.bind(_this2),
+                }.bind(this),
 
-                deleteProperty: function (object, key) {
-                    if (typeof key !== 'string') {
+                deleteProperty : function(object, key) {
+                    if(typeof key !== 'string') {
                         return true;
                     }
 
-                    var internalKey = key.substr(0, 1) === '$';
+                    let internalKey = key.substr(0, 1) === '$';
 
-                    var oldValue = object[key];
+                    let oldValue = object[key];
 
                     delete object[key];
 
-                    if (!internalKey) {
+                    if(!internalKey) {
                         this.$notifySubscribers(key, undefined, oldValue);
 
-                        this.$parent.$notifySubscribers(upperKey, this.$parent);
+                        if(this.$parent) {
+                            this.$parent.$notifySubscribers(upperKey, this.$parent);
+                        }
                     }
 
                     return true;
-                }.bind(_this2),
+                }.bind(this),
 
-                ownKeys: function ownKeys(object) {
-                    return Object.getOwnPropertyNames(object).filter(function (varname) {
-                        return varname.substr(0, 1) !== '$';
+                ownKeys : function(object) {
+                    return Object.getOwnPropertyNames(object).filter(function(varname) {
+                        return varname.substr(0, 1) !== '$' && (!this instanceof EMVObservableArray || varname !== 'length');
                     });
                 }
             };
 
-            var proxy = new Proxy(_this2, proxyHandler);
+            let proxy = new Proxy(this, proxyHandler);
 
-            Object.keys(initValue).forEach(function (key) {
+            Object.keys(initValue).forEach(function(key) {
                 proxy[key] = initValue[key];
             });
 
-            return _ret = proxy, _possibleConstructorReturn(_this2, _ret);
+            return proxy;
         }
+
 
         /**
          * Notify that a modification has been performed on a property to all of it subscribers
@@ -262,265 +296,254 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
          * @param  {mixed} value    The new value of the property
          * @param  {mixed} oldValue The previous value of the property
          */
+        $notifySubscribers(key, value, oldValue) {
+            if(!key) {
+                Object.keys(this).forEach((key) => {
+                    this.$notifySubscribers(key);
+                });
 
-
-        _createClass(EMVObservable, [{
-            key: '$notifySubscribers',
-            value: function $notifySubscribers(key, value, oldValue) {
-                var _this3 = this;
-
-                if (!key) {
-                    Object.keys(this).forEach(function (key) {
-                        _this3.$notifySubscribers(key);
-                    });
-
-                    return;
-                }
-
-                if (value === undefined) {
-                    value = this[key];
-                }
-
-                if (this.$callers[key]) {
-                    Object.keys(this.$callers[key]).forEach(function (uid) {
-                        var caller = this.$callers[key][uid];
-
-                        caller.object[caller.property] = caller.reader(caller.object);
-                    }.bind(this));
-                }
-
-                if (this.$watchers[key]) {
-                    Object.keys(this.$watchers[key]).forEach(function (uid) {
-                        this.$watchers[key][uid].call(this, value, oldValue);
-                    }.bind(this));
-                }
-
-                if (this.$directives[key]) {
-                    Object.keys(this.$directives[key]).forEach(function (uid) {
-                        var directive = this.$directives[key][uid];
-
-                        if (directive.handler.update) {
-                            directive.handler.update(directive.element, directive.parameters, directive.model, directive.context);
-                        }
-                    }.bind(this));
-                }
+                return;
             }
 
-            /**
-             * Test if an observable is an array
-             * @returns {boolean} True if the observable is an array
-             */
-
-        }, {
-            key: '$isArray',
-            value: function $isArray() {
-                for (var key in this) {
-                    if (isNaN(key) && key !== length) {
-                        return false;
-                    }
-                }
-
-                return true;
+            if(value === undefined) {
+                value = this[key];
             }
 
-            /**
-             * Clean the directives of an element on the observable
-             * @param  {DOMNode} element The element to clean the directives of
-             */
+            if(this.$callers[key]) {
+                Object.keys(this.$callers[key]).forEach(function(uid) {
+                    const caller = this.$callers[key][uid];
 
-        }, {
-            key: '$cleanDirectives',
-            value: function $cleanDirectives(element) {
-                var _this4 = this;
+                    caller.object[caller.property] = caller.reader(caller.object);
+                }.bind(this));
+            }
 
-                if (element.$directives) {
-                    Object.keys(element.$directives).forEach(function (name) {
-                        Object.keys(_this4.$directives).forEach(function (fieldname) {
-                            var directiveId = element.$uid + name;
+            if(this.$watchers[key]) {
+                Object.keys(this.$watchers[key]).forEach(function(uid) {
+                    this.$watchers[key][uid].call(this, value, oldValue);
+                }.bind(this));
+            }
 
-                            delete _this4.$directives[fieldname][directiveId];
-                        });
-                    });
-                }
+            if(this.$directives[key]) {
+                Object.keys(this.$directives[key]).forEach(function(uid) {
+                    const directive = this.$directives[key][uid];
 
-                Object.keys(this).forEach(function (fieldname) {
-                    if (_this4[fieldname] instanceof EMVObservable) {
-                        _this4[fieldname].$cleanDirectives(element);
+                    if(directive.handler.update) {
+                        directive.handler.update(
+                            directive.element,
+                            directive.parameters,
+                            directive.model,
+                            directive.context
+                        );
                     }
+                }.bind(this));
+            }
+        }
+
+        /**
+         * Clean the directives of an element on the observable
+         * @param  {DOMNode} element The element to clean the directives of
+         */
+        $cleanDirectives(element) {
+            if(element.$directives) {
+                Object.keys(element.$directives).forEach((name) => {
+                    Object.keys(this.$directives).forEach((fieldname) => {
+                        let directiveId = element.$uid + name;
+
+                        delete this.$directives[fieldname][directiveId];
+                    });
                 });
             }
 
-            /**
-             * Override the default valueOf method
-             * @returns {Object} The object data
-             */
+            Object.keys(this).forEach((fieldname) => {
+                if(this[fieldname] instanceof EMVObservable) {
+                    this[fieldname].$cleanDirectives(element);
+                }
+            });
+        }
 
-        }, {
-            key: 'valueOf',
-            value: function valueOf() {
-                var _this5 = this;
+        /**
+         * Override the default valueOf method
+         * @returns {Object} The object data
+         */
+        valueOf() {
+            let result = {};
 
-                var result = this.$isArray() ? [] : {};
+            Object.keys(this).forEach((key) => {
+                result[key] = this[key] ? this[key].valueOf() : this[key];
+            });
 
-                Object.keys(this).forEach(function (key) {
-                    result[key] = _this5[key] ? _this5[key].valueOf() : _this5[key];
-                });
+            return result;
+        }
 
-                return result;
-            }
+        /**
+         * Override the default 'toString' method to return the JSON notation of the obejct
+         * @returns {string} The JSON notation of the observable
+         */
+        toString() {
+            return JSON.stringify(this.valueOf());
+        }
+    }
 
-            /**
-             * Override the default 'toString' method to return the JSON notation of the obejct
-             * @returns {string} The JSON notation of the observable
-             */
+    /**
+     * This class describes the behavior of observable arrays data in EMV engine.
+     */
+    class EMVObservableArray extends EMVObservable {
+        /**
+         * Constructor
+         * @param  {Object} initValue       The initial value to set on the observable
+         * @param  {EMV} $root              The root EMV instance
+         * @param  {EMVObservable} $parent  The parent object, containing this one
+         * @param  {string} upperKey        The key to retrieve this object from the parent object
+         */
+        constructor(initValue, $root, $parent, upperKey) {
+            super(initValue, $root, $parent, upperKey);
 
-        }, {
-            key: 'toString',
-            value: function toString() {
-                return JSON.stringify(this.valueOf());
-            }
-        }]);
+            this.length = initValue.length;
+        }
 
-        return EMVObservable;
-    }(Array);
+        /**
+         * Override the default valueOf method
+         * @returns {Object} The object data
+         */
+        valueOf() {
+            return Array.from(this);
+        }
+    }
+
+    // Copy the prototype functions from Array to EMVObservableArray prototype
+    Object.getOwnPropertyNames(Array.prototype).forEach((key) => {
+        if(key !== 'constructor') {
+            EMVObservableArray.prototype[key] = Array.prototype[key];
+        }
+    });
 
     /**
      * This class describes the bahavior of EMV computed values
      */
+    class EMVComputed {
+        /**
+         * Constructor
+         * @param {Function} handler    The function that will be executed to render the property value
+         * @param {Object} object       The object this computed is affected on
+         */
+        constructor(handler, object) {
+            let self = this;
 
+            this.uid = guid();
+            this.object = object;
 
-    var EMVComputed =
-    /**
-     * Constructor
-     * @param {Function} handler    The function that will be executed to render the property value
-     * @param {Object} object       The object this computed is affected on
-     */
-    function EMVComputed(handler, object) {
-        _classCallCheck(this, EMVComputed);
+            if(typeof handler === 'function') {
+                handler = {
+                    read : handler
+                };
+            }
 
-        var self = this;
+            if(handler.write) {
+                this.writer = function(target, value, oldValue) {
+                    handler.write.call(target, value, oldValue);
+                };
+            }
 
-        this.uid = guid();
-        this.object = object;
+            if(handler.read) {
+                this.reader = function(target) {
+                    const previousComputed = executingComputed;
 
-        if (typeof handler === 'function') {
-            handler = {
-                read: handler
-            };
+                    executingComputed = self;
+
+                    let value;
+
+                    try {
+                        value = handler.read.call(target);
+                    }
+                    catch(err) {
+                        value = undefined;
+                    }
+
+                    executingComputed = previousComputed;
+
+                    return value;
+                };
+            }
         }
-
-        if (handler.write) {
-            this.writer = function (target, value, oldValue) {
-                handler.write.call(target, value, oldValue);
-            };
-        }
-
-        if (handler.read) {
-            this.reader = function (target) {
-                var previousComputed = executingComputed;
-
-                executingComputed = self;
-
-                var value = void 0;
-
-                try {
-                    value = handler.read.call(target);
-                } catch (err) {
-                    value = undefined;
-                }
-
-                executingComputed = previousComputed;
-
-                return value;
-            };
-        }
-    };
+    }
 
     /**
      * This class describes the global behavior of EMV directives
      */
+    class EMVDirective {
+        /**
+         * Constructor
+         * @param {string} name     The directive name
+         * @param {Object} binder   An object containing three methods :
+         *                          - init : This method is executed at EMV initialisation ,
+         *                          - bind : This method is used to bind the view events throw the model
+         *                          - update : This method is executed each time a variable of the model,
+         *                                      which this directive depends on, is modified
+         */
+        constructor(name, binder) {
+            this.name = name;
 
+            const self = this;
 
-    var EMVDirective =
-    /**
-     * Constructor
-     * @param {string} name     The directive name
-     * @param {Object} binder   An object containing three methods :
-     *                          - init : This method is executed at EMV initialisation ,
-     *                          - bind : This method is used to bind the view events throw the model
-     *                          - update : This method is executed each time a variable of the model,
-     *                                      which this directive depends on, is modified
-     */
-    function EMVDirective(name, binder) {
-        _classCallCheck(this, EMVDirective);
+            let computeDirectiveMethod = function(method) {
+                if(binder[method]) {
+                    this[method] = function(element, parameters, model, context) {
+                        if(!element.$uid) {
+                            element.$uid = guid();
+                        }
 
-        this.name = name;
+                        executingDirective = {
+                            element : element,
+                            parameters : parameters,
+                            model : model,
+                            context : context,
+                            handler : self,
+                            uid : element.$uid + name,
+                            name : name
+                        };
 
-        var self = this;
+                        binder[method](element, parameters, model, context);
 
-        var computeDirectiveMethod = function (method) {
-            if (binder[method]) {
-                this[method] = function (element, parameters, model, context) {
-                    if (!element.$uid) {
-                        element.$uid = guid();
-                    }
-
-                    executingDirective = {
-                        element: element,
-                        parameters: parameters,
-                        model: model,
-                        context: context,
-                        handler: self,
-                        uid: element.$uid + name,
-                        name: name
+                        executingDirective = null;
                     };
+                }
+            }.bind(this);
 
-                    binder[method](element, parameters, model, context);
+            computeDirectiveMethod('init');
+            computeDirectiveMethod('bind');
+            computeDirectiveMethod('update');
+        }
+    }
 
-                    executingDirective = null;
-                };
-            }
-        }.bind(this);
-
-        computeDirectiveMethod('init');
-        computeDirectiveMethod('bind');
-        computeDirectiveMethod('update');
-    };
 
     /**
      * This class describes the bevahior of an EMV instance
      */
-
-
-    var EMV = function (_EMVObservable) {
-        _inherits(EMV, _EMVObservable);
-
+    class EMV extends EMVObservable {
         /**
          * Constructor
          * @param {Object} param The initial data of the EMV
          */
-        function EMV(param) {
-            _classCallCheck(this, EMV);
+        constructor(param) {
+            super(param.data);
 
             // Manage the templates
-            var _this6 = _possibleConstructorReturn(this, (EMV.__proto__ || Object.getPrototypeOf(EMV)).call(this, param.data));
+            this.$templates = {};
 
-            _this6.$templates = {};
-
-            if (param.computed) {
-                Object.keys(param.computed).forEach(function (key) {
+            if(param.computed) {
+                Object.keys(param.computed).forEach(function(key) {
                     this.$computed[key] = new EMVComputed(param.computed[key], this);
-                }.bind(_this6));
+                }.bind(this));
             }
 
-            Object.keys(_this6.$computed).forEach(function (key) {
-                if (_this6.$computed[key].reader) {
-                    _this6[key] = _this6.$computed[key].reader(_this6);
-                } else {
-                    _this6[key] = undefined;
+            Object.keys(this.$computed).forEach((key) => {
+                if(this.$computed[key].reader) {
+                    this[key] = this.$computed[key].reader(this);
+                }
+                else {
+                    this[key] = undefined;
                 }
             });
-            return _this6;
         }
 
         /**
@@ -529,520 +552,491 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
          * @param  {Function} handler The handler to exute when the property value changes.
          *                            This function get two paramters, newValue and oldValue
          */
-
-
-        _createClass(EMV, [{
-            key: '$watch',
-            value: function $watch(prop, handler) {
-                var _this7 = this;
-
-                if (Array.isArray(prop)) {
-                    prop.forEach(function (subprop) {
-                        _this7.$watch(subprop, handler);
-                    });
-
-                    return;
-                }
-
-                var propSteps = prop.split('.'),
-                    observable = void 0,
-                    finalProp = propSteps.pop();
-
-                observable = this.$this;
-
-                propSteps.forEach(function (step) {
-                    observable = observable[step];
+        $watch(prop, handler) {
+            if(Array.isArray(prop)) {
+                prop.forEach((subprop) => {
+                    this.$watch(subprop, handler);
                 });
 
-                if (!observable) {
-                    return;
-                }
+                return;
+            }
 
-                if (!observable.$watchers[finalProp]) {
+            let propSteps = prop.split('.'),
+                observable,
+                finalProp = propSteps.pop();
+
+            observable = this.$this;
+
+            propSteps.forEach(function(step) {
+                observable = observable[step];
+            });
+
+            if(!observable) {
+                return;
+            }
+
+            if(!observable.$watchers[finalProp]) {
+                observable.$watchers[finalProp] = {};
+            }
+
+            handler.uid = guid();
+
+            observable.$watchers[finalProp][handler.uid] = handler;
+        }
+
+        /**
+         * Stop to watch on a property modifications
+         * @param  {string}   prop          The property name
+         * @param  {Function} handlerUID    The handler uid to remove from watchers. If not set,
+         *                                  all watchers on this property are unbound
+         */
+        $unwatch(prop, handlerUID) {
+            let propSteps = prop.split('.'),
+                observable,
+                finalProp = propSteps.pop();
+
+            observable = this.$this;
+
+            propSteps.forEach(function(step) {
+                observable = observable[step];
+            });
+
+            if(observable.$watchers[finalProp]) {
+                if(handlerUID) {
+                    delete observable.$watchers[finalProp][handlerUID];
+                }
+                else {
                     observable.$watchers[finalProp] = {};
                 }
+            }
+        }
 
-                handler.uid = guid();
 
-                observable.$watchers[finalProp][handler.uid] = handler;
+        /**
+         * Apply the instance on a DOM node
+         * @param  {DOMNode} element The node to apply the EMV instance on
+         */
+        $apply(element) {
+            if(this.$rootElement) {
+                throw new EMVError('an emv instance cannot be instanciated on multiple DOM elements.');
             }
 
-            /**
-             * Stop to watch on a property modifications
-             * @param  {string}   prop          The property name
-             * @param  {Function} handlerUID    The handler uid to remove from watchers. If not set,
-             *                                  all watchers on this property are unbound
-             */
+            this.$rootElement = element || document.body;
 
-        }, {
-            key: '$unwatch',
-            value: function $unwatch(prop, handlerUID) {
-                var propSteps = prop.split('.'),
-                    observable = void 0;
+            this.$createContext(this.$rootElement, this);
 
-                observable = this.$this;
+            this.$parse(this.$rootElement);
 
-                propSteps.forEach(function (step) {
-                    observable = observable[step];
+            this.$render(this.$rootElement);
+        }
+
+
+        /**
+         * Clean a node of all directives
+         * @param {DOMNode} element The element to clean
+         */
+        $clean(element) {
+            let elem = element || this.$rootElement;
+
+            if(!elem) {
+                return;
+            }
+
+            this.$cleanDirectives(elem);
+
+            delete elem.$directives;
+
+            if(elem.children) {
+                Array.from(elem.children).forEach((child) => {
+                    this.$clean(child);
                 });
-
-                if (handlerUID) {
-                    delete observable.$watchers[handlerUID];
-                } else {
-                    observable.$watchers = {};
-                }
             }
 
-            /**
-             * Apply the instance on a DOM node
-             * @param  {DOMNode} element The node to apply the EMV instance on
-             */
+            delete this.$rootElement;
+        }
 
-        }, {
-            key: '$apply',
-            value: function $apply(element) {
-                if (this.$rootElement) {
-                    throw new EMVError('an emv instance cannot be instanciated on multiple DOM elements.');
-                }
 
-                this.$rootElement = element || document.body;
+        /**
+         * Parse the directives on the element and init them
+         * @param   {DOMNode} element  The element to parse
+         * @param   {Array} excludes The directives to no parse on the element
+         */
+        $parse(element, excludes) {
+            const safeStringRegex = new RegExp(escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]), 'g');
+            const htmlStringRegex = new RegExp(escapeRegExp(EMV.config.htmlDelimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.htmlDelimiters[1]), 'g');
 
-                this.$createContext(this.$rootElement, this);
 
-                this.$parse(this.$rootElement);
-
-                this.$render(this.$rootElement);
+            if (element.nodeName.toLowerCase() === 'template') {
+                // Parse templates
+                this.$templates[element.id] = element.innerHTML;
             }
+            else if(element.nodeName.toLowerCase() === '#text') {
+                // Parse raw directives in texts
+                const value = element.textContent;
+                const matchSafe = value.match(safeStringRegex);
+                const matchUnsafe = value.match(htmlStringRegex);
 
-            /**
-             * Clean a node of all directives
-             * @param {DOMNode} element The element to clean
-             */
+                if(matchSafe || matchUnsafe) {
+                    this.$getContext(element.parentNode);
 
-        }, {
-            key: '$clean',
-            value: function $clean(element) {
-                var _this8 = this;
-
-                var elem = element || this.$rootElement;
-
-                if (!elem) {
-                    return;
-                }
-
-                this.$cleanDirectives(elem);
-
-                delete elem.$directives;
-
-                if (elem.children) {
-                    Array.from(elem.children).forEach(function (child) {
-                        _this8.$clean(child);
-                    });
-                }
-
-                delete this.$rootElement;
-            }
-
-            /**
-             * Parse the directives on the element and init them
-             * @param   {DOMNode} element  The element to parse
-             * @param   {Array} excludes The directives to no parse on the element
-             */
-
-        }, {
-            key: '$parse',
-            value: function $parse(element, excludes) {
-                var _this9 = this;
-
-                var safeStringRegex = new RegExp(escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]), 'g');
-                var htmlStringRegex = new RegExp(escapeRegExp(EMV.config.htmlDelimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.htmlDelimiters[1]), 'g');
-
-                if (element.nodeName.toLowerCase() === 'template') {
-                    // Parse templates
-                    this.$templates[element.id] = element.innerHTML;
-                } else if (element.nodeName.toLowerCase() === '#text') {
-                    // Parse raw directives in texts
-                    var value = element.textContent;
-                    var matchSafe = value.match(safeStringRegex);
-                    var matchUnsafe = value.match(htmlStringRegex);
-
-                    if (matchSafe || matchUnsafe) {
-                        this.$getContext(element.parentNode);
-
-                        if (!element.parentNode.$directives) {
-                            element.parentNode.$directives = {};
-                        }
-
-                        var parameters = value.replace(safeStringRegex, '\' + ($1) + \'').replace(htmlStringRegex, '\' + ($1) + \'').replace(/^\s+/, '').replace(/\s+$/, '');
-
-                        if (matchUnsafe) {
-                            // Unsafe text
-                            element.parentNode.$directives.html = {
-                                name: 'html',
-                                handler: EMV.directives.html,
-                                parameters: '\'' + parameters + '\''
-                            };
-                        } else {
-                            // Safe text
-                            element.parentNode.$directives.text = {
-                                name: 'text',
-                                handler: EMV.directives.text,
-                                parameters: '\'' + parameters + '\''
-                            };
-                        }
+                    if(!element.parentNode.$directives) {
+                        element.parentNode.$directives = {};
                     }
-                } else if (element.attributes) {
-                    // Parse attributes directives
-                    Object.keys(EMV.directives).forEach(function (name) {
-                        if (!excludes || excludes.indexOf(name) === -1) {
-                            var attribute = EMV.config.attributePrefix + '-' + name,
-                                _parameters = element.getAttribute(attribute);
 
-                            if (_parameters) {
-                                var directive = EMV.directives[name];
+                    const parameters = value.replace(safeStringRegex, '\' + ($1) + \'')
+                                        .replace(htmlStringRegex, '\' + ($1) + \'')
+                                        .replace(/^\s+/, '')
+                                        .replace(/\s+$/, '');
 
-                                if (!element.$directives) {
-                                    element.$directives = {};
-                                }
+                    if(matchUnsafe) {
+                        // Unsafe text
+                        element.parentNode.$directives.html = {
+                            name : 'html',
+                            handler : EMV.directives.html,
+                            parameters : `'${parameters}'`
+                        };
+                    }
+                    else {
+                        // Safe text
+                        element.parentNode.$directives.text = {
+                            name : 'text',
+                            handler : EMV.directives.text,
+                            parameters : `'${parameters}'`
+                        };
+                    }
+                }
+            }
+            else if(element.attributes) {
+                // Parse attributes directives
+                Object.keys(EMV.directives).forEach((name) => {
+                    if(!excludes || excludes.indexOf(name) === -1) {
+                        let attribute = `${EMV.config.attributePrefix}-${name}`,
+                            parameters = element.getAttribute(attribute);
 
-                                _this9.$getContext(element);
-                                element.$directives[name] = {
-                                    name: name,
-                                    handler: directive,
-                                    parameters: _parameters
-                                };
+                        if(parameters) {
+                            let directive = EMV.directives[name];
 
-                                if (directive.init) {
-                                    directive.init.call(_this9, element, _parameters, _this9);
-                                }
-                            }
-                        }
-                    });
-
-                    // Parse raw directives in attributes
-                    Array.from(element.attributes).forEach(function (attribute) {
-                        var attributeName = attribute.name;
-                        var value = attribute.textContent;
-                        var matchSafe = value.match(safeStringRegex);
-
-                        if (matchSafe !== null) {
-                            if (!element.$directives) {
+                            if(!element.$directives) {
                                 element.$directives = {};
                             }
 
-                            var attrDirective = element.$directives.attr;
+                            this.$getContext(element);
+                            element.$directives[name] = {
+                                name : name,
+                                handler : directive,
+                                parameters : parameters
+                            };
 
-                            var _parameters2 = attrDirective && attrDirective.parameters || '';
-
-                            if (_parameters2) {
-                                _parameters2 = _parameters2.substring(1, _parameters2.length - 1) + ',';
-                            }
-
-                            _parameters2 += attributeName + ' : \'' + value.replace(safeStringRegex, '\' + ($1) + \'') + '\'';
-
-                            _parameters2 = '{' + _parameters2 + '}';
-
-                            if (attrDirective) {
-                                attrDirective.parameters = _parameters2;
-                            } else {
-                                element.$directives.attr = {
-                                    name: 'attr',
-                                    handler: EMV.directives.attr,
-                                    parameters: _parameters2
-                                };
+                            if(directive.init) {
+                                directive.init.call(this, element, parameters, this);
                             }
                         }
-                    });
-                }
-
-                if (element.childNodes) {
-                    Array.from(element.childNodes).forEach(function (child) {
-                        _this9.$parse(child);
-                    });
-                }
-            }
-
-            /**
-             * Render a node and all it descendants with declared directives
-             * @param  {DOMNode} element The node to render
-             * @param {Array} excludes The directives to not render on the element
-             */
-
-        }, {
-            key: '$render',
-            value: function $render(element, excludes) {
-                var _this10 = this;
-
-                if (element.$directives) {
-                    Object.keys(element.$directives).forEach(function (name) {
-                        if (!excludes || excludes.indexOf(name) === -1) {
-                            var directive = element.$directives[name],
-                                handler = directive.handler,
-                                parameters = directive.parameters;
-
-                            if (handler.bind) {
-                                handler.bind.call(this, element, parameters, this);
-                            }
-                            if (handler.update) {
-                                handler.update.call(this, element, parameters, this);
-                            }
-                        }
-                    }.bind(this));
-                }
-
-                if (element.childNodes) {
-                    Array.from(element.childNodes).forEach(function (child) {
-                        _this10.$render(child);
-                    });
-                }
-            }
-
-            /**
-             * Create a context, attached to a DOM node
-             * @param  {DOMNode} element       THe node to create a context on
-             * @param  {Object} object      The object to insert in the context
-             * @param  {Object} otherParams Other parameters to insert in the context
-             */
-
-        }, {
-            key: '$createContext',
-            value: function $createContext(element, object, otherParams) {
-                creatingContext = true;
-
-                var context = object;
-
-                if (object instanceof EMVObservable) {
-                    // context = object;
-                    context.$this = object;
-                    context.$parent = object.$parent;
-                    context.$root = this;
-                } else {
-                    context = {
-                        $this: object,
-                        $parent: object.$parent,
-                        $root: this
-                    };
-                }
-
-                var additionalProperties = this.$getAdditionalContextProperties(element);
-
-                additionalProperties.forEach(function (key) {
-                    if (['$this', '$parent', '$root'].indexOf(key) !== -1) {
-                        throw new EMVError('You cannot apply the key \'' + key + '\' as additionnal context property');
                     }
-
-                    context[key] = element.parentNode.$context[key];
                 });
 
-                element.$additionalContextProperties = new Set(Array.from(additionalProperties));
+                // Parse raw directives in attributes
+                Array.from(element.attributes).forEach((attribute) => {
+                    const attributeName = attribute.name;
+                    const value = attribute.textContent;
+                    const matchSafe = value.match(safeStringRegex);
 
-                if (otherParams) {
-                    Object.keys(otherParams).forEach(function (key) {
-                        context[key] = otherParams[key];
-                        element.$additionalContextProperties.add(key);
-                    });
-                }
-
-                element.$context = context;
-
-                creatingContext = false;
-            }
-
-            /**
-             * Remove the context of an element
-             * @param  {DOMNode} element The element to remove the context of
-             */
-
-        }, {
-            key: '$removeContext',
-            value: function $removeContext(element) {
-                var _this11 = this;
-
-                delete element.$context;
-
-                if (element.children) {
-                    Array.from(element.children).forEach(function (child) {
-                        _this11.$removeContext(child);
-                    });
-                }
-            }
-
-            /**
-             * Get the contect of a given DOM node
-             * @param   {DOMNode} element The node to get the context o
-             * @returns {Object}       The DOM node context
-             */
-
-        }, {
-            key: '$getContext',
-            value: function $getContext(element) {
-                if (element.$context) {
-                    return element.$context;
-                }
-
-                var context = this.$getContext(element.parentNode);
-
-                element.$context = context;
-
-                return context;
-            }
-
-            /**
-             * Get the contect of a given DOM node
-             * @param   {DOMNode} element The node to get the context o
-             * @returns {Object}       The DOM node context
-             */
-
-        }, {
-            key: '$getAdditionalContextProperties',
-            value: function $getAdditionalContextProperties(element) {
-                if (element.$additionalContextProperties) {
-                    return element.$additionalContextProperties;
-                }
-
-                if (element === this.$rootElement) {
-                    return new Set([]);
-                }
-
-                var additionalContextProperties = this.$getAdditionalContextProperties(element.parentNode);
-
-                element.$additionalContextProperties = additionalContextProperties;
-
-                return additionalContextProperties;
-            }
-
-            /**
-             * This method parses parameters in a directive
-             * @param   {string} parameters The node attribute value, corresponding the directive attributes
-             * @returns {Function}          The parsed function
-             */
-
-        }, {
-            key: '$parseDirectiveGetterParameters',
-            value: function $parseDirectiveGetterParameters(parameters) {
-                return new Function('$context', '\n                var result;\n                with($context) {\n                    result=(' + parameters + ');\n                    // result=(' + parameters.replace(reservedWordsRegex, '$this.$1') + ');\n                };\n                return result;\n            ');
-            }
-
-            /**
-             * Get the value of a directive parameters
-             * @param {string} parameters The directive parameters
-             * @param {Object} element    The element the directive is applied on
-             * @param {Object} context Force to use this context
-             * @returns {mixed}             The calculated value
-             */
-
-        }, {
-            key: '$getDirectiveValue',
-            value: function $getDirectiveValue(parameters, element, context) {
-                var getter = this.$parseDirectiveGetterParameters(parameters);
-
-                try {
-                    return getter(context || this.$getContext(element));
-                } catch (err) {
-                    return undefined;
-                }
-            }
-
-            /**
-             * This method parses parameters in a directive
-             * @param   {string} parameters The node attribute value, corresponding the directive attributes
-             * @returns {Function}          The parsed function
-             */
-
-        }, {
-            key: '$parseDirectiveSetterParameters',
-            value: function $parseDirectiveSetterParameters(parameters) {
-                return new Function('$context', '$value', '\n                with($context) {\n                    ' + parameters.replace(reservedWordsRegex, '$this.$1') + ' = $value;\n                }\n            ');
-            }
-
-            /**
-             * Set the value on the property defined by the directive parameters
-             * @param {string}  parameters The directive parameters
-             * @param {DOMNode} element    The element the directive is applied on
-             * @param {mixed}   value      The value to set
-             */
-
-        }, {
-            key: '$setDirectiveValue',
-            value: function $setDirectiveValue(parameters, element, value) {
-                var setter = this.$parseDirectiveSetterParameters(parameters);
-
-                setter(this.$getContext(element), value);
-            }
-
-            /**
-             * Create a directive for EMV
-             * @param {string} name   The directive name
-             * @param {Object} binder The directive description. This object contains two methods bind and update
-             */
-
-        }, {
-            key: '$insertRemoveElement',
-
-
-            /**
-             * Insert or remove an element from it parent element
-             * @param {DOMNode} element  The element to insert or remove form the DOM
-             * @param {boolean} value    Defines if the element must be created (true) or removed (false)
-             * @param {DOMNode} baseon   The element to base on to insert the element. If not set, it is the element itself
-             */
-            value: function $insertRemoveElement(element, value, baseon) {
-                if (!baseon) {
-                    baseon = element;
-                }
-
-                if (value && !baseon.$parent.contains(element)) {
-                    // Insert the node
-                    var before = null;
-
-                    baseon.$before.every(function (node) {
-                        if (baseon.$parent.contains(node)) {
-                            before = node;
-
-                            return false;
+                    if(matchSafe !== null) {
+                        if(!element.$directives) {
+                            element.$directives = {};
                         }
 
-                        return true;
-                    });
+                        let attrDirective = element.$directives.attr;
 
-                    if (before) {
-                        if (before.nextElementSibling) {
-                            baseon.$parent.insertBefore(element, before.nextElementSibling);
-                        } else {
-                            baseon.$parent.appendChild(element);
+                        let parameters = attrDirective && attrDirective.parameters || '';
+
+                        if(parameters) {
+                            parameters = parameters.substring(1, parameters.length - 1) + ',';
                         }
-                    } else {
-                        baseon.$parent.insertBefore(element, element.$parent.firstChild);
+
+                        parameters += `'${attributeName}' : '${value.replace(safeStringRegex, '\' + ($1) + \'')}'`;
+
+                        parameters = `{${parameters}}`;
+
+                        if(attrDirective) {
+                            attrDirective.parameters = parameters;
+                        }
+                        else {
+                            element.$directives.attr = {
+                                name : 'attr',
+                                handler : EMV.directives.attr,
+                                parameters : parameters
+                            };
+                        }
                     }
+                });
+            }
 
-                    var excludes = null;
+            if(element.childNodes) {
+                Array.from(element.childNodes).forEach((child) => {
+                    this.$parse(child);
+                });
+            }
+        }
 
-                    if (executingDirective) {
-                        excludes = [executingDirective.name];
+
+        /**
+         * Render a node and all it descendants with declared directives
+         * @param  {DOMNode} element The node to render
+         * @param {Array} excludes The directives to not render on the element
+         */
+        $render(element, excludes) {
+            if(element.$directives) {
+                Object.keys(element.$directives).forEach(function(name) {
+                    if(!excludes || excludes.indexOf(name) === -1) {
+                        let directive = element.$directives[name],
+                            handler = directive.handler,
+                            parameters = directive.parameters;
+
+                        if(handler.bind) {
+                            handler.bind.call(this, element, parameters, this);
+                        }
+                        if(handler.update) {
+                            handler.update.call(this, element, parameters, this);
+                        }
                     }
+                }.bind(this));
+            }
 
-                    this.$render(element, excludes);
-                } else if (element.$parent.contains(element) && !value) {
-                    // remove the node
-                    element.$parent.removeChild(element);
+
+            if(element.childNodes) {
+                Array.from(element.childNodes).forEach((child) => {
+                    this.$render(child);
+                });
+            }
+        }
+
+
+        /**
+         * Create a context, attached to a DOM node
+         * @param  {DOMNode} element       THe node to create a context on
+         * @param  {Object} object      The object to insert in the context
+         * @param  {Object} otherParams Other parameters to insert in the context
+         */
+        $createContext(element, object, otherParams) {
+            creatingContext = true;
+
+            let context = object;
+
+            if(object instanceof EMVObservable) {
+                // context = object;
+                context.$this = object;
+                context.$parent = object.$parent;
+                context.$root = this;
+            }
+            else {
+                context = {
+                    $this : object,
+                    $parent : object.$parent,
+                    $root : this
+                };
+            }
+
+            let additionalProperties = this.$getAdditionalContextProperties(element);
+
+            additionalProperties.forEach((key) => {
+                if(['$this', '$parent', '$root'].indexOf(key) !== -1) {
+                    throw new EMVError(`You cannot apply the key '${key}' as additionnal context property`);
                 }
-            }
-        }], [{
-            key: 'directive',
-            value: function directive(name, binder) {
-                this.directives[name] = new EMVDirective(name, binder);
-            }
-        }]);
 
-        return EMV;
-    }(EMVObservable);
+                context[key] = element.parentNode.$context[key];
+            });
+
+            element.$additionalContextProperties = new Set(Array.from(additionalProperties));
+
+            if(otherParams) {
+                Object.keys(otherParams).forEach((key) => {
+                    context[key] = otherParams[key];
+                    element.$additionalContextProperties.add(key);
+                });
+            }
+
+            element.$context = context;
+
+            creatingContext = false;
+        }
+
+        /**
+         * Remove the context of an element
+         * @param  {DOMNode} element The element to remove the context of
+         */
+        $removeContext(element) {
+            delete element.$context;
+
+            if(element.children) {
+                Array.from(element.children).forEach((child) => {
+                    this.$removeContext(child);
+                });
+            }
+        }
+
+        /**
+         * Get the contect of a given DOM node
+         * @param   {DOMNode} element The node to get the context o
+         * @returns {Object}       The DOM node context
+         */
+        $getContext(element) {
+            if(element.$context) {
+                return element.$context;
+            }
+
+            let context = this.$getContext(element.parentNode);
+
+            element.$context = context;
+
+            return context;
+        }
+
+
+        /**
+         * Get the contect of a given DOM node
+         * @param   {DOMNode} element The node to get the context o
+         * @returns {Object}       The DOM node context
+         */
+        $getAdditionalContextProperties(element) {
+            if(element.$additionalContextProperties) {
+                return element.$additionalContextProperties;
+            }
+
+            if(element === this.$rootElement) {
+                return new Set([]);
+            }
+
+            let additionalContextProperties = this.$getAdditionalContextProperties(element.parentNode);
+
+            element.$additionalContextProperties = additionalContextProperties;
+
+            return additionalContextProperties;
+        }
+
+        /**
+         * This method parses parameters in a directive
+         * @param   {string} parameters The node attribute value, corresponding the directive attributes
+         * @returns {Function}          The parsed function
+         */
+        $parseDirectiveGetterParameters(parameters) {
+            return new Function('$context', `
+                var result;
+                with($context) {
+                    result=(${parameters.replace(reservedWordsRegex, '$this.$1')});
+                };
+                return result;
+            `);
+        }
+
+        /**
+         * Get the value of a directive parameters
+         * @param {string} parameters The directive parameters
+         * @param {Object} element    The element the directive is applied on
+         * @param {Object} context Force to use this context
+         * @returns {mixed}             The calculated value
+         */
+        $getDirectiveValue(parameters, element, context) {
+            let getter = this.$parseDirectiveGetterParameters(parameters);
+
+            try {
+                return getter(context || this.$getContext(element));
+            }
+            catch(err) {
+                return undefined;
+            }
+        }
+
+        /**
+         * This method parses parameters in a directive
+         * @param   {string} parameters The node attribute value, corresponding the directive attributes
+         * @returns {Function}          The parsed function
+         */
+        $parseDirectiveSetterParameters(parameters) {
+            return new Function('$context', '$value', `
+                with($context) {
+                    ${parameters.replace(reservedWordsRegex, '$this.$1')} = $value;
+                }
+            `);
+        }
+
+
+        /**
+         * Set the value on the property defined by the directive parameters
+         * @param {string}  parameters The directive parameters
+         * @param {DOMNode} element    The element the directive is applied on
+         * @param {mixed}   value      The value to set
+         */
+        $setDirectiveValue(parameters, element, value) {
+            let setter = this.$parseDirectiveSetterParameters(parameters);
+
+            setter(this.$getContext(element), value);
+        }
+
+        /**
+         * Create a directive for EMV
+         * @param {string} name   The directive name
+         * @param {Object} binder The directive description. This object contains two methods bind and update
+         */
+        static directive(name, binder) {
+            this.directives[name] = new EMVDirective(name, binder);
+        }
+
+        /**
+         * Insert or remove an element from it parent element
+         * @param {DOMNode} element  The element to insert or remove form the DOM
+         * @param {boolean} value    Defines if the element must be created (true) or removed (false)
+         * @param {DOMNode} baseon   The element to base on to insert the element. If not set, it is the element itself
+         */
+        $insertRemoveElement(element, value, baseon) {
+            if(!baseon) {
+                baseon = element;
+            }
+
+            if(value && !baseon.$parent.contains(element)) {
+                // Insert the node
+                let before = null;
+
+                baseon.$before.every(function(node) {
+                    if(baseon.$parent.contains(node)) {
+                        before = node;
+
+                        return false;
+                    }
+
+                    return true;
+                });
+
+                if(before) {
+                    if(before.nextElementSibling) {
+                        baseon.$parent.insertBefore(element, before.nextElementSibling);
+                    }
+                    else {
+                        baseon.$parent.appendChild(element);
+                    }
+                }
+                else {
+                    baseon.$parent.insertBefore(element, element.$parent.firstChild);
+                }
+
+                let excludes = null;
+
+                if(executingDirective) {
+                    excludes = [executingDirective.name];
+                }
+
+                this.$render(element, excludes);
+            }
+            else if(element.$parent.contains(element) && !value) {
+                // remove the node
+                element.$parent.removeChild(element);
+            }
+        }
+    }
 
     /**
      * The EMV ciretives
      * @type {Object}
      */
-
-
     EMV.directives = {};
 
     /**
@@ -1051,52 +1045,57 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Show / hide an element
     EMV.directive('show', {
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
-            if (value) {
+            if(value) {
                 element.style.display = '';
-            } else {
+            }
+            else {
                 element.style.display = 'none';
             }
         }
     });
 
+
     EMV.directive('class', {
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
             if (!element.originalClassList) {
                 element.originalClassList = [];
-                element.classList.forEach(function (classname) {
+                Array.from(element.classList).forEach(function(classname) {
                     element.originalClassList.push(classname);
                 });
             }
 
             // Reset the element to it original class list before applying calculated classes
-            element.classList.forEach(function (classname) {
-                if (element.originalClassList.indexOf(classname) === -1) {
+            Array.from(element.classList).forEach(function(classname) {
+                if(element.originalClassList.indexOf(classname) === -1) {
                     element.classList.remove(classname);
                 }
             });
 
-            if (!value) {
+            if(!value) {
                 return;
             }
 
-            if (typeof value === 'string') {
-                value = _defineProperty({}, value, true);
+            if(typeof value === 'string') {
+                value = {
+                    [value] : true
+                };
             }
 
-            if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
-                Object.keys(value).forEach(function (classname) {
-                    var classes = classname.split(' '),
+            if(typeof value === 'object') {
+                Object.keys(value).forEach(function(classname) {
+                    let classes = classname.split(' '),
                         classList = element.classList;
 
-                    classes.forEach(function (cl) {
-                        if (value[classname]) {
+                    classes.forEach(function(cl) {
+                        if(value[classname]) {
                             classList.add(cl);
-                        } else {
+                        }
+                        else {
                             classList.remove(cl);
                         }
                     });
@@ -1106,19 +1105,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     });
 
     EMV.directive('style', {
-        update: function update(element, parameters, model) {
-            var styles = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let styles = model.$getDirectiveValue(parameters, element);
 
-            if (!styles || (typeof styles === 'undefined' ? 'undefined' : _typeof(styles)) !== 'object') {
+            if(!styles || typeof styles !== 'object') {
                 return;
             }
 
-            Object.keys(styles).forEach(function (attr) {
-                var value = styles[attr];
+            Object.keys(styles).forEach(function(attr) {
+                let value = styles[attr];
 
-                if (!value) {
-                    delete element.style[attr];
-                } else {
+                if(!value) {
+                    element.style[attr] = '';
+                }
+                else {
                     element.style[attr] = value;
                 }
             });
@@ -1126,19 +1126,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     });
 
     EMV.directive('attr', {
-        update: function update(element, parameters, model) {
-            var attributes = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let attributes = model.$getDirectiveValue(parameters, element);
 
-            if (!attributes || (typeof attributes === 'undefined' ? 'undefined' : _typeof(attributes)) !== 'object') {
+            if(!attributes || typeof attributes !== 'object') {
                 return;
             }
 
-            Object.keys(attributes).forEach(function (attr) {
-                var value = attributes[attr];
+            Object.keys(attributes).forEach(function(attr) {
+                let value = attributes[attr];
 
-                if (!value) {
+                if(!value) {
                     element.removeAttribute(attr);
-                } else {
+                }
+                else {
                     element.setAttribute(attr, value);
                 }
             });
@@ -1146,12 +1147,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     });
 
     EMV.directive('disabled', {
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
-            if (!value) {
+            if(!value) {
                 element.removeAttribute('disabled');
-            } else {
+            }
+            else {
                 element.setAttribute('disabled', true);
             }
         }
@@ -1161,219 +1163,207 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
      * Form control directives
      */
     EMV.directive('value', {
-        bind: function bind(element, parameters, model) {
-            element.onchange = function () {
-                var value = void 0;
+        bind : function(element, parameters, model) {
+            element.onchange = function() {
+                let value;
 
-                var nodeName = element.nodeName.toLowerCase(),
+                let nodeName = element.nodeName.toLowerCase(),
                     type = element.type;
 
-                switch (nodeName) {
-                    case 'input':
-                    case 'select':
-                        switch (type) {
-                            case 'checkbox':
+                switch(nodeName) {
+                    case 'input' :
+                    case 'select' :
+                        switch(type) {
+                            case 'checkbox' :
                                 value = Boolean(element.checked);
                                 break;
 
-                            case 'radio':
-                                value = document.querySelector('input[name="' + element.name + '"]:checked').value;
+                            case 'radio' :
+                                value = document.querySelector(`input[name="${element.name}"]:checked`).value;
                                 break;
 
-                            default:
+                            default :
                                 value = element.value;
                                 break;
                         }
                         break;
 
-                    case 'textarea':
+                    case 'textarea' :
                         value = element.value;
                         break;
 
-                    default:
+                    default :
                         return;
                 }
 
                 model.$setDirectiveValue(parameters, element, value);
             };
         },
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
-            if (value === undefined) {
+            if(value === undefined) {
                 value = '';
             }
 
-            var nodeName = element.nodeName.toLowerCase(),
+            let nodeName = element.nodeName.toLowerCase(),
                 type = element.type;
 
-            switch (nodeName) {
-                case 'input':
-                case 'select':
-                    switch (type) {
-                        case 'checkbox':
+            switch(nodeName) {
+                case 'input' :
+                case 'select' :
+                    switch(type) {
+                        case 'checkbox' :
                             element.checked = Boolean(value);
                             break;
 
-                        case 'radio':
-                            {
-                                var radio = document.querySelector('input[name="' + element.name + '"][value="' + value + '"]');
+                        case 'radio' : {
+                            let radio = document.querySelector(`input[name="${element.name}"][value="${value}"]`);
 
-                                if (radio) {
-                                    radio.checked = true;
-                                }
-                                break;
+                            if(radio) {
+                                radio.checked = true;
                             }
+                            break;
+                        }
 
-                        default:
+                        default :
                             element.value = value;
                             break;
                     }
                     break;
 
-                case 'textarea':
+                case 'textarea' :
                     element.value = value;
                     break;
 
-                default:
+                default :
                     element.value = value;
             }
         }
     });
 
     EMV.directive('input', {
-        bind: function bind(element, parameters, model) {
-            element.addEventListener('input', function () {
+        bind : function(element, parameters, model) {
+            element.addEventListener('input', function() {
                 model.$setDirectiveValue(parameters, element, element.value);
             });
         },
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
             element.value = value;
         }
     });
 
     EMV.directive('focus', {
-        bind: function bind(element, parameters, model) {
-            element.addEventListener('focus', function () {
+        bind : function(element, parameters, model) {
+            element.addEventListener('focus', function() {
                 model.$setDirectiveValue(parameters, element, true);
             });
 
-            element.addEventListener('blur', function () {
+            element.addEventListener('blur', function() {
                 model.$setDirectiveValue(parameters, element, false);
             });
         },
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
-            if (value) {
+            if(value && element !== document.activeElement) {
                 element.focus();
-            } else {
+            }
+            else if(!value && element === document.activeElement) {
                 element.blur();
             }
         }
     });
 
     EMV.directive('options', {
-        update: function update(element, parameters, model) {
-            if (element.nodeName.toLowerCase() !== 'select') {
+        update : function(element, parameters, model) {
+            if(element.nodeName.toLowerCase() !== 'select') {
                 throw new EMVError('options directive can be applied only on select tags');
             }
 
-            var value = model.$getDirectiveValue(parameters, element),
+            let value = model.$getDirectiveValue(parameters, element),
                 options = value;
 
-            if (!value) {
+            if(!value) {
                 return;
             }
 
-            if ('$data' in value && !value.$data) {
+            if('$data' in value && !value.$data) {
                 return;
             }
 
-            if (value.$data) {
+            if(value.$data) {
                 options = {};
-                Object.keys(value.$data).forEach(function (key) {
-                    if (Array.isArray(value.$data) && key === 'length') {
-                        return;
-                    }
-
-                    var line = value.$data[key];
-                    var optionValue = value.$value ? line[value.$value] : key;
-                    var optionLabel = value.$label ? line[value.$label] : line;
+                Object.keys(value.$data).forEach(function(key) {
+                    let line = value.$data[key];
+                    let optionValue = value.$value ? line[value.$value] : key;
+                    let optionLabel = value.$label ? line[value.$label] : line;
 
                     options[optionValue] = optionLabel;
                 });
             }
 
             // Reset the select
-            var currentValue = element.value || value.$selected;
+            let currentValue = element.value || value.$selected;
 
             element.innerHTML = '';
 
             // Insert the options tags
-            var insertOptionTag = function insertOptionTag(value, label) {
-                var optionTag = document.createElement('option');
+            let insertOptionTag = function(value, label) {
+                let optionTag = document.createElement('option');
 
                 optionTag.value = value;
                 optionTag.innerText = label;
-                if (value.toString() === currentValue) {
+                if(value.toString() === currentValue) {
                     optionTag.selected = true;
                 }
 
                 element.appendChild(optionTag);
             };
 
-            if (Array.isArray(options)) {
-                options.forEach(function (label, value) {
-                    insertOptionTag(value, label);
-                });
-            } else {
-                Object.keys(options).forEach(function (value) {
-                    var label = options[value];
+            Object.keys(options).forEach(function(value) {
+                let label = options[value];
 
-                    insertOptionTag(value, label);
-                });
-            }
-
-            if (element.onchange) {
-                element.onchange();
-            }
+                insertOptionTag(value, label);
+            });
         }
     });
+
 
     /**
      * Content directives
      */
     EMV.directive('text', {
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
             element.innerText = value;
         }
     });
 
     EMV.directive('html', {
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
             element.innerHTML = value;
         }
     });
 
+
     /**
      * Events directives
      */
     EMV.directive('click', {
-        bind: function bind(element, parameters, model) {
-            var action = model.$parseDirectiveGetterParameters(parameters);
+        bind : function(element, parameters, model) {
+            let action = model.$parseDirectiveGetterParameters(parameters);
 
-            element.onclick = function (event) {
-                var ctx = model.$getContext(element);
-                var result = action(ctx, event);
+            element.onclick = function(event) {
+                let ctx = model.$getContext(element);
+                let result = action(ctx, event);
 
-                if (typeof result === 'function') {
+                if(typeof result === 'function') {
                     result.call(ctx.$this, ctx, event);
                 }
             };
@@ -1381,19 +1371,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     });
 
     EMV.directive('on', {
-        bind: function bind(element, parameters, model) {
-            var parser = model.$parseDirectiveGetterParameters(parameters),
+        bind : function(element, parameters, model) {
+            let parser = model.$parseDirectiveGetterParameters(parameters),
                 events = parser(model.$getContext(element));
 
-            if ((typeof events === 'undefined' ? 'undefined' : _typeof(events)) !== 'object') {
+
+            if(typeof events !== 'object') {
                 return;
             }
 
-            Object.keys(events).forEach(function (event) {
-                var action = events[event],
-                    listener = 'on' + event;
+            Object.keys(events).forEach(function(event) {
+                let action = events[event],
+                    listener = `on${event}`;
 
-                element[listener] = function (event) {
+                element[listener] = function(event) {
                     action(model.$getContext(element), event);
                 };
             });
@@ -1401,29 +1392,30 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     });
 
     EMV.directive('submit', {
-        bind: function bind(element, parameters, model) {
-            if (element.nodeName.toLowerCase() !== 'form') {
+        bind : function(element, parameters, model) {
+            if(element.nodeName.toLowerCase() !== 'form') {
                 throw new EMVError('submit directive can be applied only on form tags');
             }
-            var action = model.$parseDirectiveGetterParameters(parameters);
+            let action = model.$parseDirectiveGetterParameters(parameters);
 
-            element.addEventListener('submit', function (event) {
-                var result = action(model.$getContext(element));
+            element.addEventListener('submit', function(event) {
+                let result = action(model.$getContext(element));
 
-                if (typeof result === 'function') {
+                if(typeof result === 'function') {
                     result(model.$getContext(element), event);
                 }
             });
         }
     });
 
-    var initElementPreviousSibliings = function initElementPreviousSibliings(element) {
+
+    var initElementPreviousSibliings = function(element) {
         element.$before = [];
 
-        if (element.previousElementSibling) {
+        if(element.previousElementSibling) {
             element.$before = [element.previousElementSibling];
 
-            if (element.previousElementSibling.$before) {
+            if(element.previousElementSibling.$before) {
                 element.$before = element.$before.concat(element.previousElementSibling.$before);
             }
         }
@@ -1435,23 +1427,24 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
      * Dom maniuplation directives
      */
     EMV.directive('each', {
-        options: {
-            comments: true
+        options : {
+            comments : true
         },
 
-        init: function init(element, parameters) {
+        init : function(element, parameters) {
             initElementPreviousSibliings(element);
 
-            var parent = element.parentNode;
-            var uid = guid();
+            let parent = element.parentNode;
+            let uid = guid();
 
             element.$clones = [];
 
-            var replacer = document.createElement(element.nodeName);
+
+            let replacer = document.createElement(element.nodeName);
 
             replacer.$eachElement = element;
             replacer.$directives = {
-                each: element.$directives.each
+                each : element.$directives.each
             };
 
             delete element.$directives.each;
@@ -1462,133 +1455,136 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             parent.replaceChild(replacer, element);
         },
 
-        update: function update(replacer, parameters, model) {
+        update : function(replacer, parameters, model) {
             // Get the real element
-            var element = replacer.$eachElement;
+            let element = replacer.$eachElement;
 
-            var param = model.$getDirectiveValue(parameters, element);
+            let param = model.$getDirectiveValue(parameters, element);
 
             // Reset the list
-            element.$clones.forEach(function (clone) {
-                if (clone.parentNode && clone.parentNode.contains(clone)) {
+            element.$clones.forEach(function(clone) {
+                if(clone.parentNode && clone.parentNode.contains(clone)) {
                     clone.parentNode.removeChild(clone);
                 }
             });
 
             // Remove the element itself
-            if (replacer.parentNode && replacer.parentNode.contains(replacer)) {
+            if(replacer.parentNode && replacer.parentNode.contains(replacer)) {
                 replacer.parentNode.removeChild(replacer);
             }
 
             element.$clones = [];
 
-            if (param) {
-                (function () {
-                    var list = param && Array.from('$data' in param ? param.$data : param) || [];
+            if(param) {
+                let list = param && Array.from('$data' in param ? param.$data : param) || [];
 
-                    list = list.filter(function (item) {
-                        return item;
-                    });
+                list = list.filter((item) => {
+                    return item;
+                });
 
-                    // Filter the list
-                    if (param.$filter) {
-                        list = list.filter(param.$filter);
+                // Filter the list
+                if(param.$filter) {
+                    list = list.filter(param.$filter);
+                }
+
+                // Order the list
+                if(param.$sort) {
+                    if(typeof param.$sort === 'function') {
+                        list.sort(param.$sort);
                     }
-
-                    // Order the list
-                    if (param.$sort) {
-                        if (typeof param.$order === 'function') {
-                            list.sort(param.$sort);
-                        } else {
-                            list.sort(function (item1, item2) {
-                                return item1[param.$sort] < item2[param.$sort] ? -1 : 1;
-                            });
-                        }
+                    else {
+                        list.sort(function(item1, item2) {
+                            return item1[param.$sort] < item2[param.$sort] ? -1 : 1;
+                        });
                     }
+                }
 
-                    if (param.$order && param.$order < 0) {
-                        list.reverse();
-                    }
-
-                    var offset = param.$offset || 0,
-                        end = offset + (param.$limit || list.length);
-
-                    list = list.slice(offset, end);
-                    // Reverse the list to insert the items in the right order, because the insertion uses insertbefore
+                if(param.$order && param.$order < 0) {
                     list.reverse();
+                }
 
-                    list.forEach(function (item, index) {
-                        // Get the real index, because the list is reversed
-                        var realIndex = list.length - 1 - index;
-                        var additionalProperties = {
-                            $index: realIndex
-                        };
+                let offset = param.$offset || 0,
+                    end = offset + (param.$limit || list.length);
 
-                        if (param.$item) {
-                            additionalProperties['$' + param.$item] = item;
-                        }
+                list = list.slice(offset, end);
+                // Reverse the list to insert the items in the right order, because the insertion uses insertbefore
+                list.reverse();
 
-                        var clone = element.cloneNode(true);
+                list.forEach(function(item, index) {
+                    // Get the real index, because the list is reversed
+                    let realIndex = list.length - 1 - index;
+                    let additionalProperties = {
+                        $index : realIndex
+                    };
 
-                        clone.$parent = element.$parent;
-                        clone.$directives = element.$directives;
-                        delete clone.$directives.each;
+                    if (param.$item) {
+                        additionalProperties['$' + param.$item] = item;
+                    }
 
-                        // Insert the clone
-                        model.$insertRemoveElement(clone, true, element);
+                    let clone = element.cloneNode(true);
 
-                        // Create the sub context for the item
-                        model.$createContext(clone, item, additionalProperties);
+                    clone.$parent = element.$parent;
+                    clone.$directives = element.$directives;
+                    delete clone.$directives.each;
 
-                        // Add the clone to the list of the element clones
-                        element.$clones.push(clone);
+                    // Insert the clone
+                    model.$insertRemoveElement(clone, true, element);
 
-                        model.$parse(clone, ['each']);
-                        model.$render(clone, ['each']);
-                    });
-                })();
+                    // Create the sub context for the item
+                    model.$createContext(clone, item, additionalProperties);
+
+                    // Add the clone to the list of the element clones
+                    element.$clones.push(clone);
+
+                    model.$parse(clone, ['each']);
+                    model.$render(clone, ['each']);
+                });
             }
         }
     });
 
     EMV.directive('if', {
-        init: function init(element) {
+        init : function(element) {
             initElementPreviousSibliings(element);
         },
 
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
             model.$insertRemoveElement(element, Boolean(value));
         }
     });
 
     EMV.directive('unless', {
-        init: function init(element) {
+        init : function(element) {
             initElementPreviousSibliings(element);
         },
 
-        update: function update(element, parameters, model) {
-            var value = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let value = model.$getDirectiveValue(parameters, element);
 
             model.$insertRemoveElement(element, !value);
         }
     });
 
     EMV.directive('with', {
-        init: function init(element, parameters, model) {
-            var context = model.$getDirectiveValue(parameters, element === model.$rootElement ? element : element.parentNode);
+        init : (element, parameters, model) => {
+            let context = model.$getDirectiveValue(parameters, element === model.$rootElement ? element : element.parentNode);
 
             model.$createContext(element, context);
         },
-        update: function update(element, parameters, model) {
-            var context = void 0;
+        update : (element, parameters, model) => {
+            let context;
 
-            if (element === model.$rootElement) {
+            if(element === model.$rootElement) {
                 context = model.$getDirectiveValue(parameters, element, model);
-            } else {
+            }
+            else if(element.parentNode) {
                 model.$removeContext(element);
                 context = model.$getDirectiveValue(parameters, element.parentNode);
+            }
+            else {
+                return;
             }
 
             model.$createContext(element, context);
@@ -1598,17 +1594,17 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     });
 
     EMV.directive('template', {
-        update: function update(element, parameters, model) {
-            var templateName = model.$getDirectiveValue(parameters, element);
+        update : function(element, parameters, model) {
+            let templateName = model.$getDirectiveValue(parameters, element);
 
-            var template = model.$templates[templateName];
+            let template = model.$templates[templateName] || '';
 
             // Insert the template
             element.innerHTML = template;
 
             // Parse and render the content
-            if (element.children) {
-                Array.from(element.children).forEach(function (child) {
+            if(element.childNodes) {
+                Array.from(element.childNodes).forEach((child) => {
                     model.$createContext(child, model.$getContext(element));
 
                     model.$parse(child);
@@ -1619,16 +1615,17 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }
     });
 
+
     EMV.config = {
-        attributePrefix: 'e',
-        templateEngine: '',
-        delimiters: ['${', '}'],
-        htmlDelimiters: ['!{', '}']
+        attributePrefix : 'e',
+        templateEngine : '',
+        delimiters : ['${', '}'],
+        htmlDelimiters : ['!{', '}']
     };
 
     Object.defineProperty(EMV, 'version', {
-        value: '1.0.0',
-        writable: false
+        value : '1.0.0',
+        writable : false
     });
 
     return EMV;

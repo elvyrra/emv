@@ -7,31 +7,22 @@
     "test": "test"
   },
   "scripts": {
-    "test-u": "node --harmony-proxies -e \"require('mocha/bin/_mocha')\"",
-    "test": "rm -Rf coverage && istanbul --harmony-proxies --include-all-sources --root=./lib cover test 'npm run test-u' -- --harmony-proxies",
+    "test": "rm -Rf coverage && istanbul --include-all-sources --root=./lib cover _mocha",
     "lint": "eslint ./lib",
-    "build-dev": "mkdir -p dist && babel ./lib/emv.js --out-file ./dist/emv.js",
-    "build" : "npm run build-dev && ./node_modules/.bin/uglifyjs --mangle --compress --output ./dist/emv.min.js ./dist/emv.js"
+    "uglify" : "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv.min.js ./lib/emv.js",
+    "build": "npm run lint && npm run test && mkdir -p dist && cp ./lib/emv.js ./dist && npm run uglify"
   },
   "author": "Sebastien Lecocq",
   "license": "ISC",
   "devDependencies": {
-    "babel-cli": "^6.14.0",
-    "babel-preset-es2015": "^6.14.0",
     "chai": "^3.5.0",
+    "chai-cheerio": "^1.0.0",
     "chai-jquery": "^2.0.0",
     "cheerio": "^0.22.0",
-    "harmony-proxy": "^1.0.1",
     "istanbul": "^0.4.5",
     "istanbul-harmony": "^0.3.16",
+    "jsdom": "^9.5.0",
     "mocha": "^3.0.0",
-    "mocha-phantomjs": "^4.1.0",
-    "node-dom": "^0.1.0",
-    "phantomjs": "^2.1.7",
     "uglify-js-harmony": "^2.6.2"
-  },
-  "babel" : {
-    "presets" : ["es2015"],
-    "filenameRelative" : "./lib/emv.js"
   }
 }

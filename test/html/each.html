@@ -1,0 +1,13 @@
+<html>
+    <body>
+        <ul>
+            <li e-each="list" e-text="label"></li>
+        </ul>
+
+        <div e-each="{$data : list, $filter : filter, $sort : 'label', $order : -1, $item : 'item'}">
+            <span e-text="$item.label"></span>
+        </div>
+
+        <button e-each="{$data : list, $sort : sort}" e-text="$this.label"></button>
+    </body>
+</html>
