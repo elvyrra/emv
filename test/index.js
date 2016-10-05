@@ -485,7 +485,8 @@ describe('EMV', () => {
                         radio : 0,
                         select : 1,
                         textarea : '',
-                        other : ''
+                        other : '',
+                        editable : ''
                     }
                 });
 
@@ -563,6 +564,12 @@ describe('EMV', () => {
                 emv.textarea = 'Hello';
 
                 expect($('#textarea-value').val()).to.equal('Hello');
+            });
+
+            it('update contenteditable div element', () => {
+                emv.editable = 'Hello';
+
+                expect($('#editable').get(0).value).to.equal('Hello');
             });
 
             it('bind other element', () => {
