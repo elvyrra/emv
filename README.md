@@ -707,3 +707,14 @@ This object contains the following properties :
 
 ## (static readonly) EMV.version
 Defines the EMV engin version
+
+
+# Known issues
+1. In directives, if use variable which name is a JavaScript reserved word, you need to prefix it by $this. For example, you cannot write :
+```html
+<span e-if="if"></span>
+```
+but you need to write :
+```html
+<span e-if="$this.id"></span>
+```

@@ -256,6 +256,17 @@ describe('EMV', () => {
             expect(fullnameCall).to.equal(3);
             expect(upperNickNameCall).to.equal(2);
         });
+
+
+        it('check if an EMVObservableArray is considered as Array', () => {
+            const emv = new EMV({
+                data : {
+                    arr : [1, 2, 3]
+                }
+            });
+
+            expect(Array.isArray(emv.arr)).to.equal(true);
+        })
     });
 
     describe('Directives', () => {
