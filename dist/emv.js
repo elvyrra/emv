@@ -926,11 +926,13 @@
          */
         $parseDirectiveGetterParameters(parameters) {
             return new Function('$context', `
-                var result;
+                let $result;
+
                 with($context) {
-                    result=(${parameters});
+                    $result=(${parameters});
                 };
-                return result;
+
+                return $result;
             `);
         }
 
