@@ -266,7 +266,7 @@ describe('EMV', () => {
             });
 
             expect(Array.isArray(emv.arr)).to.equal(true);
-        })
+        });
     });
 
     describe('Directives', () => {
@@ -818,7 +818,7 @@ describe('EMV', () => {
                 emv.text2 = 'Garry';
 
                 expect($('#attr').get(0).innerText).to.equal('Hi');
-                expect($('#inline').get(0).innerText).to.equal('Garry');
+                expect($('#inline').get(0).innerHTML).to.equal('<i e-class="text" class="Hi"></i>Garry');
             });
 
             afterEach('clean emv binding', () => {
@@ -851,7 +851,7 @@ describe('EMV', () => {
                 emv.text2 = '<b>Garry</b>';
 
                 expect($('#attr').get(0).innerHTML).to.equal('Hi');
-                expect($('#inline').get(0).innerHTML).to.equal('<b>Garry</b>');
+                expect($('#inline').get(0).innerHTML).to.equal('<span e-html="text">Hi</span><b>Garry</b>');
             });
 
             afterEach('clean emv binding', () => {
@@ -1157,12 +1157,14 @@ describe('EMV', () => {
                 });
             });
 
-            it('check if directive', () => {
+            it('check with directive', () => {
                 expect($('div').get(0).innerText).to.equal('Hello');
 
                 emv.obj.text = 'Hi';
 
                 expect($('div').get(0).innerText).to.equal('Hi');
+
+                expect($('span').get(0).innerText).to.equal('Hi');
             });
 
             it('Apply the emv on the element that have the with directive', () => {

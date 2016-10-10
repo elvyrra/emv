@@ -1,6 +1,6 @@
 {
   "name": "emv",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "EMV is a light and powerful two-way data binding system",
   "main": "emv.js",
   "directories": {
@@ -9,8 +9,10 @@
   "scripts": {
     "test": "rm -Rf coverage && istanbul --include-all-sources --root=./lib cover _mocha",
     "lint": "eslint ./lib",
-    "uglify" : "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv.min.js ./lib/emv.js",
-    "build": "npm run lint && npm run test && mkdir -p dist && cp ./lib/emv.js ./dist && npm run uglify"
+    "uglify": "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv.min.js ./lib/emv.js",
+    "build-version": "mkdir -p dist &&  cp ./lib/emv.js ./dist && sed -i \"s/{{ version }}/${npm_package_version}/g\" ./dist/emv.js",
+    "build": "npm run lint && npm run test && npm run build-version && npm run uglify",
+    "commit": "commit-wizard"
   },
   "author": "Sebastien Lecocq",
   "license": "ISC",
@@ -23,6 +25,15 @@
     "istanbul-harmony": "^0.3.16",
     "jsdom": "^9.5.0",
     "mocha": "^3.0.0",
+    "pre-git": "^3.10.0",
     "uglify-js-harmony": "^2.6.2"
+  },
+  "config": {
+    "pre-git": {
+      "commit-msg": "simple",
+      "post-commit": [
+        "git tag v${npm_package_version}"
+      ]
+    }
   }
 }

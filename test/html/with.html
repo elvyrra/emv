@@ -1,5 +1,7 @@
 <html>
     <body>
         <div e-with="obj" e-text="text"></div>
+
+        <span e-with="{$data : obj, $as : 'myobj'}" e-text="$myobj.text"></span>
     </body>
 </html>
