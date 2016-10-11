@@ -508,6 +508,14 @@ emv.$apply();
 </div>
 ```
 
+Another alternative notation is available, if you want to name the object in the sub context :
+```html
+<div e-with="{$data : obj, $as : 'contact'}">
+    <span e-text="first"></span> <span e-text="$contact.last"></span>
+</div>
+```
+
+
 ### e-template : Display the content of a template
 ```html
 <template id="my-template">
