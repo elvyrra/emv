@@ -719,19 +719,19 @@ Defines the EMV engin version
 
 # Known issues
 1. In directives, if use variable which name is a JavaScript reserved word, you need to prefix it by $this. For example, you cannot write :
-```html
-<span e-if="if"></span>
-```
-but you need to write :
-```html
-<span e-if="$this.if"></span>
-```
+ ```html
+ <span e-if="if"></span>
+ ```
+ but you need to write :
+ ```html
+ <span e-if="$this.if"></span>
+ ```
 
 2. If you configure EMV delimiters and htmlDelimiters, the patterns you choose for each of these variables cannot include the other one. For example,
-you cannot set :
-```javascript
-EMV.config.delimiters = ['{{', '}}'];
-EMV.config.htmlDelimiter = ['{{{', '}}}'];
-```
+ you cannot set :
+ ```javascript
+ EMV.config.delimiters = ['{{', '}}'];
+ EMV.config.htmlDelimiter = ['{{{', '}}}'];
+ ```
 
-It's a known issue we're trying to resolve.
+ It's a known issue we're trying to resolve.
