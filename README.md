@@ -726,3 +726,12 @@ but you need to write :
 ```html
 <span e-if="$this.if"></span>
 ```
+
+2. If you configure EMV delimiters and htmlDelimiters, the patterns you choose for each of these variables cannot include the other one. For example,
+you cannot set :
+```javascript
+EMV.config.delimiters = ['{{', '}}'];
+EMV.config.htmlDelimiter = ['{{{', '}}}'];
+```
+
+It's a known issue we're trying to resolve.
