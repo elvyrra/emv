@@ -9,7 +9,7 @@
   "scripts": {
     "test": "rm -Rf coverage && istanbul --include-all-sources --root=./lib cover _mocha",
     "lint": "eslint ./lib",
-    "uglify": "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv.min.js ./lib/emv.js",
+    "uglify": "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv.min.js ./dist/emv.js",
     "build-version": "mkdir -p dist &&  cp ./lib/emv.js ./dist && sed -i \"s/{{ version }}/${npm_package_version}/g\" ./dist/emv.js",
     "build": "npm run lint && npm run test && npm run build-version && npm run uglify",
     "commit": "commit-wizard"
