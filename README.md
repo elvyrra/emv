@@ -13,7 +13,7 @@ Download EMV, and integrate it in your project :
 
 ## Legacy
 ```html
-<script type="text/javascrip" src="path/to/emv.min.js"></script>
+<script type="text/javascript" src="path/to/emv.min.js"></script>
 ```
 
 ## Require AMD
