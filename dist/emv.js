@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js v1.0.4
+ * emv.js v1.0.5
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -700,7 +700,8 @@
                         const parameters = element.parentNode.innerHTML.replace(safeStringRegex, '\' + ($1) + \'')
                                             .replace(htmlStringRegex, '\' + ($1) + \'')
                                             .replace(/^\s+/, '')
-                                            .replace(/\s+$/, '');
+                                            .replace(/\s+$/, '')
+                                            .replace(/\n+/, '');
 
                         // Unsafe text
                         element.parentNode.$directives.html = {
@@ -713,7 +714,8 @@
                         const parameters = value.replace(safeStringRegex, '\' + ($1) + \'')
                                         .replace(htmlStringRegex, '\' + ($1) + \'')
                                         .replace(/^\s+/, '')
-                                        .replace(/\s+$/, '');
+                                        .replace(/\s+$/, '')
+                                        .replace(/\n+/, '');
 
                         // Safe text
                         element.parentNode.$directives.text = {
@@ -1683,7 +1685,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '1.0.4',
+        value : '1.0.5',
         writable : false
     });
 
