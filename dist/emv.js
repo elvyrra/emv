@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js v1.0.3
+ * emv.js v1.0.4
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -409,7 +409,9 @@
          * @returns {Object} The object data
          */
         valueOf() {
-            return Array.from(this);
+            return Array.from(this).map((item) => {
+                return item ? item.valueOf() : item;
+            });
         }
     }
 
@@ -1681,7 +1683,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '1.0.3',
+        value : '1.0.4',
         writable : false
     });
 

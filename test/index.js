@@ -165,7 +165,11 @@ describe('EMV', () => {
                     obj : {
                         text : 'world'
                     },
-                    arr : [1,2,3]
+                    arr : [
+                        {type : 1},
+                        2,
+                        3
+                    ]
                 },
                 computed : {
                     upper : function() {
@@ -179,7 +183,11 @@ describe('EMV', () => {
                 obj : {
                     text : 'world'
                 },
-                arr : [1,2,3],
+                arr : [
+                    {type : 1},
+                    2,
+                    3
+                ],
                 upper : 'HELLO'
             };
 
