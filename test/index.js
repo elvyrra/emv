@@ -855,11 +855,9 @@ describe('EMV', () => {
             });
 
             it('check html directive', () => {
-                emv.text = 'Hi';
-                emv.text2 = '<b>Garry</b>';
+                emv.text = '<b>Hi</b>';
 
-                expect($('#attr').get(0).innerHTML).to.equal('Hi');
-                expect($('#inline').get(0).innerHTML).to.equal('<span e-html="text">Hi</span><b>Garry</b>');
+                expect($('#attr').get(0).innerHTML).to.equal('<b>Hi</b>');
             });
 
             afterEach('clean emv binding', () => {
