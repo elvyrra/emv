@@ -24,15 +24,33 @@
 
     <body>
         <div id="emv">
-            Salut rickie
-            ${text}
+            <ul>
+                <li e-each="array.items" e-text="getName()"></li>
+            </ul>
         </div>
 
         <script type="text/javascript" src="../lib/emv.js"></script>
         <script type="text/javascript">
+            class Item {
+                constructor(name) {
+                    this.name = name;
+                }
+
+                getName() {
+                    return this.name;
+                }
+            }
+
+            class ItemList {
+                constructor(items) {
+                    this.items = items.map((item) => new Item(item));
+                }
+            }
+
             let emv = new EMV({
                 data : {
-                    text  : 'cocuou'
+                    item : new Item('coucou'),
+                    array : new ItemList(['cocuou', 'salut'])
                 }
             });
 

@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js v1.0.5
+ * emv.js v1.0.6
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -224,6 +224,14 @@
                         }
                         else {
                             object[key] = new EMVObservable(value, this.$root || object, object, key);
+
+                            if(value.constructor.name !== 'Object') {
+                                Object.getOwnPropertyNames(value.constructor.prototype).forEach((functionName) => {
+                                    if(key !== 'constructor') {
+                                        object[key][functionName] = value[functionName];
+                                    }
+                                });
+                            }
                         }
                     }
                     else {
@@ -1686,7 +1694,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '1.0.5',
+        value : '1.0.6',
         writable : false
     });
 

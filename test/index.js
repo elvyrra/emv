@@ -46,6 +46,16 @@ describe('EMV', () => {
     describe('EMV model-model', () => {
         let emv;
 
+        class Item {
+            constructor(name) {
+                this.name = name;
+            }
+
+            getName() {
+                return this.name;
+            }
+        }
+
         beforeEach('instanciate a new EMV', () => {
             emv = new EMV({
                 data : {
@@ -62,7 +72,11 @@ describe('EMV', () => {
                     obj : {
                         action : 'Hello',
                         param : 'World'
-                    }
+                    },
+                    items : [
+                        new Item('Hello'),
+                        new Item('World')
+                    ]
                 },
                 computed : {
                     fullAction : {
@@ -84,6 +98,10 @@ describe('EMV', () => {
         it('Check sub object types', () => {
             expect(emv.arr.constructor.name).to.equal('EMVObservableArray');
             expect(emv.obj.constructor.name).to.equal('EMVObservable');
+
+            expect(emv.items.length).to.equal(2);
+            expect(emv.items[0].getName()).to.equal('Hello');
+            expect(emv.items[1].getName()).to.equal('World');
         });
 
         it('test readable computed', () => {
@@ -155,7 +173,6 @@ describe('EMV', () => {
             emv.obj.text = 'Garry';
 
             expect(emv.str).to.equal('new : Hi; old : undefined');
-
         });
 
         it('valueOf / toString', () => {
