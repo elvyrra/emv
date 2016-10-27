@@ -13,7 +13,7 @@ Download EMV, and integrate it in your project :
 
 ## Legacy
 ```html
-<script type="text/javascrip" src="path/to/emv.min.js"></script>
+<script type="text/javascript" src="path/to/emv.min.js"></script>
 ```
 
 ## Require AMD
@@ -51,7 +51,7 @@ const emv = require('emv');
         <input id="firstname" type="text" e-value="firstname" />
         <input id="lastname" type="text" e-value="lastname" />
 
-        <div id="fullname"> !{fullname} </div>
+        <div id="fullname"> ${fullname} </div>
     </body>
 </html>
 
@@ -80,7 +80,7 @@ This code will :
 * Display the value of emv.title in the `h1` tag as a text (HTML tags are escaped)
 * Bind the `input#firstname` to emv.firstname
 * Bind the `input#lastname`to emv.lastname
-* Display the value of emv.fullname as HTML in the `div#fullname`
+* Display the value of emv.fullname in the `div#fullname`
 * When the falue of emv.firstname or emv.lastname is modified, the value of emv.fullname is automatically calculated
 
 # Create an EMV instance
@@ -525,7 +525,7 @@ Another alternative notation is available, if you want to name the object in the
 <div e-with="obj" e-template="'my-template'"></div>
 ```
 
-## Handlebars directives
+## Handlebars directive
 Two particular directives exist in EMV, that we called 'handlebars directives'. They are not defined as attributes, by directly in the code, to display text, HTML or update node attributes
 
 
@@ -534,14 +534,6 @@ This directive can be writter in a text node to display a text, or in a tag deca
 
 ```html
 <div class='class1 clas2 ${class3}'> ${text} </div>
-```
-
-
-### Display HTML : !{}
-This directive can only be written in text nodes, because HTML tags cannot be written in HTML tags declarations.
-
-```html
-<div>!{html}</div>
 ```
 
 
@@ -711,7 +703,6 @@ This object contains the following properties :
 |---|---|---|
 | attributePrefix | `'e-'` | The prefix for directives attributes |
 | delimiters | `['${', '}']` | The delimiters used to parse text handlebars directives |
-| htmlDelimiters | `['!{', '}']` | The delimiters used to parse HTML handlebars directives |
 
 ## (static readonly) EMV.version
 Defines the EMV engin version
