@@ -25,33 +25,38 @@
     <body>
         <div id="emv">
             <ul>
-                <li e-each="array.items" e-text="getName()"></li>
+                <li e-each="{$data : items,  $item : 'item'}">
+                    <span>${$item.name}</span>
+
+                    <p e-each="{$data : $item.items, $item : 'sub'}">${$sub.surname}</p>
+                </li>
             </ul>
         </div>
 
         <script type="text/javascript" src="../lib/emv.js"></script>
         <script type="text/javascript">
-            class Item {
-                constructor(name) {
-                    this.name = name;
-                }
-
-                getName() {
-                    return this.name;
-                }
-            }
-
-            class ItemList {
-                constructor(items) {
-                    this.items = items.map((item) => new Item(item));
-                }
-            }
-
             let emv = new EMV({
-                data : {
-                    item : new Item('coucou'),
-                    array : new ItemList(['cocuou', 'salut'])
-                }
+                items : [
+                    {
+                        name : 'item1',
+                        items : [
+                            {
+                                surname : 'item11'
+                            },
+                            {
+                                surname : 'item12'
+                            }
+                        ]
+                    },
+                    {
+                        name : 'item2',
+                        items : [
+                            {
+                                surname : 'item21'
+                            }
+                        ]
+                    }
+                ]
             });
 
             emv.$apply();

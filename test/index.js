@@ -276,9 +276,11 @@ describe('EMV', () => {
             expect(fullnameCall).to.equal(1);
             expect(upperNickNameCall).to.equal(1);
 
-            emv.$notifySubscribers();
+            emv.$notifySubscribers('firstname');
 
-            expect(fullnameCall).to.equal(3);
+            expect(fullnameCall).to.equal(2);
+
+            emv.$notifySubscribers('nickname');
             expect(upperNickNameCall).to.equal(2);
         });
 
