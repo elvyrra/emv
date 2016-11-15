@@ -156,9 +156,11 @@ describe('EMV', () => {
                 }
             });
 
-            emv.$watch(['obj.text', 'obj.sub'], function updateStr(value, oldValue) {
+            function updateStr(value, oldValue) {
                 this.str = `new : ${value}; old : ${oldValue}`;
-            }.bind(emv));
+            }
+
+            emv.$watch(['obj.text', 'obj.sub'], updateStr.bind(emv));
 
             emv.obj.text = 'Garry';
 
@@ -168,11 +170,28 @@ describe('EMV', () => {
 
             expect(emv.str).to.equal('new : Hi; old : undefined');
 
+            // Unwatch
             emv.$unwatch('obj.text');
 
             emv.obj.text = 'Garry';
 
             expect(emv.str).to.equal('new : Hi; old : undefined');
+
+            emv.$unwatch('obj.sub', updateStr);
+
+            expect(emv.str).to.equal('new : Hi; old : undefined');
+
+
+            // Watch an unknwon property
+            emv.$watch('unknown.str', function(value) {
+                this.str = value;
+            }.bind(emv));
+
+            emv.unknown = {
+                str : 'coucou'
+            };
+
+            expect(emv.str).to.not.equal('coucou');
         });
 
         it('valueOf / toString', () => {
@@ -209,7 +228,14 @@ describe('EMV', () => {
             };
 
             expect(emv.valueOf()).to.eql(expected);
-            expect(JSON.parse(emv.toString())).to.eql(expected);
+            expect(emv.toString()).to.eql(JSON.stringify(expected));
+            expect(emv.arr.toString()).to.eql(JSON.stringify(expected.arr));
+
+            const emv2 = new EMV({
+                str : undefined
+            });
+
+            expect(emv2.valueOf()).to.eql({str : undefined});
         });
 
         it('apply many times an emv instance', () => {
@@ -531,9 +557,11 @@ describe('EMV', () => {
                 return loadPage('value.html')
 
                 .then((jquery) => {
+                    $ = jquery;
+                    $('#editable').get(0).contentEditable = 'true';
+
                     emv.$apply();
 
-                    $ = jquery;
                 });
             });
 
@@ -607,7 +635,14 @@ describe('EMV', () => {
             it('update contenteditable div element', () => {
                 emv.editable = 'Hello';
 
-                expect($('#editable').get(0).value).to.equal('Hello');
+                expect($('#editable').get(0).innerHTML).to.equal('Hello');
+            });
+
+            it('bind contenteditable div element', () => {
+                $('#editable').get(0).innerHTML = 'coucou';
+                $('#editable').get(0).onblur();
+
+                expect(emv.editable).to.equal('coucou');
             });
 
             it('bind other element', () => {
@@ -859,8 +894,7 @@ describe('EMV', () => {
             beforeEach(() => {
                 emv = new EMV({
                     data : {
-                        text : 'Hello',
-                        text2 : 'World'
+                        text : 'Hello'
                     }
                 });
 
@@ -876,7 +910,20 @@ describe('EMV', () => {
             it('check html directive', () => {
                 emv.text = '<b>Hi</b>';
 
-                expect($('#attr').get(0).innerHTML).to.equal('<b>Hi</b>');
+                expect($('#attr').get(0).innerHTML).to.equal(emv.text);
+            });
+
+            it.skip('check html directive with inline script', () => {
+                emv.text = '<b>Hi</b><script>$("#to-remove").remove();</script>';
+
+                expect($('#attr').get(0).innerHTML).to.equal(emv.text);
+                expect($('#to-remove').length).to.equal(0);
+            });
+
+            it('check html directive with scripttag with src attribute', () => {
+                emv.text = '<b>Hi</b><script src="test.js"></script>';
+
+                expect($('#attr').get(0).innerHTML).to.equal(emv.text);
             });
 
             afterEach('clean emv binding', () => {
@@ -999,7 +1046,7 @@ describe('EMV', () => {
                 })
 
                 .should.be.rejectedWith('submit directive can be applied only on form tags');
-            })
+            });
 
             afterEach('clean emv binding', () => {
                 emv.$clean();
@@ -1190,6 +1237,19 @@ describe('EMV', () => {
                 expect($('div').get(0).innerText).to.equal('Hi');
 
                 expect($('span').get(0).innerText).to.equal('Hi');
+
+                expect($('ul').length).to.equal(0);
+
+                emv.obj2 = {
+                    comments : [
+                        {text : 'coucou'},
+                        {text : 'coucou2'},
+                        {text : 'coucou3'}
+                    ]
+                };
+
+                expect($('ul').length).to.equal(1);
+                expect($('li').length).to.equal(3);
             });
 
             it('Apply the emv on the element that have the with directive', () => {
@@ -1228,17 +1288,30 @@ describe('EMV', () => {
                 });
             });
 
-            it('check if directive', () => {
+            it('check template directive', () => {
                 expect($('span').length).to.equal(0);
 
                 emv.template = 'my-template';
 
                 expect($('span').get(0).innerText).to.equal('Hello');
+
+                // expect($('#to-remove').length).to.equal(0);
+
+                expect($('#wrapper script').length).to.equal(2);
             });
 
             afterEach('clean emv binding', () => {
                 emv.$clean();
             });
+        });
+    });
+
+    describe('utils', () => {
+        it('uid', () => {
+            let x = EMV.utils.uid(),
+                y = EMV.utils.uid();
+
+            expect(x).to.not.equal(y);
         });
     });
 });

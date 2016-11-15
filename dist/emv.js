@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js v1.0.6
+ * emv.js v1.0.7
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -307,6 +307,10 @@
          */
         $notifySubscribers(key, value, oldValue) {
             if(!key) {
+                Object.keys(this).forEach((key) => {
+                    this.$notifySubscribers(key);
+                });
+
                 return;
             }
 
@@ -1602,7 +1606,7 @@
 
             let context = model.$getDirectiveValue(
                 parameters,
-                element === model.$rootElement ? element : element.parentNode
+                element === model.$rootElement ? element : element.$parent
             );
             let additionalProperties = {};
 
@@ -1629,9 +1633,9 @@
             if(element === model.$rootElement) {
                 context = model.$getDirectiveValue(parameters, element, model);
             }
-            else if(element.parentNode) {
+            else if(element.$parent) {
                 model.$removeContext(element);
-                context = model.$getDirectiveValue(parameters, element.parentNode);
+                context = model.$getDirectiveValue(parameters, element.$parent);
             }
             else {
                 return;
@@ -1647,6 +1651,12 @@
 
             if(context) {
                 model.$insertRemoveElement(element, true);
+
+                if(element.childNodes) {
+                    Array.from(element.childNodes).forEach((child) => {
+                        model.$removeContext(child);
+                    });
+                }
 
                 model.$createContext(element, context, additionalProperties);
 
@@ -1666,6 +1676,23 @@
 
             // Insert the template
             element.innerHTML = template;
+
+            const scripts = element.querySelectorAll('script');
+
+            Array.from(scripts).forEach((script) => {
+                if(script.innerText) {
+                    const func = new Function(script.innerText);
+
+                    func();
+                }
+                else {
+                    const node = document.createElement('script');
+
+                    node.src = script.src;
+
+                    script.parentNode.replaceChild(node, script);
+                }
+            });
 
             // Parse and render the content
             if(element.childNodes) {
@@ -1688,9 +1715,16 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '1.0.6',
+        value : '1.0.7',
         writable : false
     });
+
+    // Utils
+    EMV.utils = {
+        uid : function() {
+            return guid();
+        }
+    };
 
     // Overwrite Array.isArray function to make EMVObservableArray to return true
     const originalIsArray = Array.isArray;

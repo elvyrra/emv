@@ -1,9 +1,14 @@
 <html>
     <body>
+        <div id="to-remove"></div>
         <template id="my-template">
             <span e-text="text"></span>
+            <script>
+                $('#to-remove');
+            </script>
+            <script src="test.js"></script>
         </template>
 
-        <div e-template="template"></div>
+        <div id="wrapper" e-template="template"></div>
     </body>
 </html>

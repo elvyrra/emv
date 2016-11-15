@@ -3,5 +3,9 @@
         <div e-with="obj" e-text="text"></div>
 
         <span e-with="{$data : obj, $as : 'myobj'}" e-text="$myobj.text"></span>
+
+        <ul e-with="obj2">
+            <li e-each="comments">${text}</li>
+        </ul>
     </body>
 </html>

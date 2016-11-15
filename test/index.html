@@ -24,19 +24,29 @@
 
     <body>
         <div id="emv">
-            <ul>
+            <ul e-with="obj">
                 <li e-each="{$data : items,  $item : 'item'}">
-                    <span>${$item.name}</span>
+                    <span>${$this.name}</span>
 
-                    <p e-each="{$data : $item.items, $item : 'sub'}">${$sub.surname}</p>
+                    <p e-each="{$data : $this.items, $item : 'sub'}">${$sub.surname}</p>
                 </li>
             </ul>
+
+            <button e-on="{click : click}">Click me!</button>
         </div>
 
         <script type="text/javascript" src="../lib/emv.js"></script>
         <script type="text/javascript">
             let emv = new EMV({
-                items : [
+                click : function() {
+                    alert('clicked');
+                }
+            });
+
+            emv.$apply();
+
+            emv.obj = {
+                items :  [
                     {
                         name : 'item1',
                         items : [
@@ -57,9 +67,7 @@
                         ]
                     }
                 ]
-            });
-
-            emv.$apply();
+            };
         </script>
     </body>
 </html>
