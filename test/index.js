@@ -9,6 +9,9 @@ const jsdom = require('jsdom');
 const chaiAsPromised = require('chai-as-promised');
 const chaiCheerio = require('chai-cheerio');
 const EMV = require('../lib/emv');
+const HTMLElement = require('html-element').Element;
+
+global.HTMLElement = HTMLElement;
 
 chai.use(chaiAsPromised);
 chai.use(chaiCheerio);
@@ -55,6 +58,10 @@ describe('EMV', () => {
                 return this.name;
             }
         }
+
+        beforeEach('load a page to get window and document', () => {
+            return loadPage('show.html');
+        });
 
         beforeEach('instanciate a new EMV', () => {
             emv = new EMV({

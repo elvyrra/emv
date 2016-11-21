@@ -24,50 +24,36 @@
 
     <body>
         <div id="emv">
-            <ul e-with="obj">
-                <li e-each="{$data : items,  $item : 'item'}">
-                    <span>${$this.name}</span>
-
-                    <p e-each="{$data : $this.items, $item : 'sub'}">${$sub.surname}</p>
+            <ul e-with="selected">
+                <li e-each="items">
+                    <span>${name}</span>
                 </li>
             </ul>
-
-            <button e-on="{click : click}">Click me!</button>
         </div>
 
         <script type="text/javascript" src="../lib/emv.js"></script>
         <script type="text/javascript">
             let emv = new EMV({
-                click : function() {
-                    alert('clicked');
-                }
-            });
-
-            emv.$apply();
-
-            emv.obj = {
-                items :  [
+                elements : [
                     {
-                        name : 'item1',
                         items : [
-                            {
-                                surname : 'item11'
-                            },
-                            {
-                                surname : 'item12'
-                            }
+                            { name : 'item1'},
+                            { name : 'item2'},
+                            { name : 'item3'}
                         ]
                     },
                     {
-                        name : 'item2',
                         items : [
-                            {
-                                surname : 'item21'
-                            }
+                            { name : 'item4'},
+                            { name : 'item5'}
                         ]
                     }
                 ]
-            };
+            });
+
+            emv.selected = emv.elements[0];
+
+            emv.$apply();
         </script>
     </body>
 </html>
