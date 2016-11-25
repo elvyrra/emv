@@ -1103,6 +1103,11 @@ describe('EMV', () => {
                 expect($('li').get(0).innerText).to.equal('one');
                 expect($('li').get(1).innerText).to.equal('two');
                 expect($('li').get(2).innerText).to.equal('three');
+
+                emv.list.splice(0, 1);
+                expect($('li').length).to.equal(2);
+                expect($('li').get(0).innerText).to.equal('two');
+                expect($('li').get(1).innerText).to.equal('three');
             });
 
             it('check each directive with filter, sort, order and item', () => {

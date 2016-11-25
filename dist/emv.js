@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js v1.1.1
+ * emv.js v1.1.2
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -882,7 +882,7 @@
                     throw new EMVError(`You cannot apply the key '${key}' as additionnal context property`);
                 }
 
-                context[key] = element.parentNode.$context[key];
+                context[key] = (element.parentNode || element.$parent).$context[key];
             });
 
             element.$additionalContextProperties = new Set(Array.from(additionalProperties));
@@ -949,8 +949,10 @@
                 return new Set([]);
             }
 
-            if(element.parentNode) {
-                let additionalContextProperties = this.$getAdditionalContextProperties(element.parentNode);
+            const parent = element.parentNode || element.$parent;
+
+            if(parent) {
+                let additionalContextProperties = this.$getAdditionalContextProperties(parent);
 
                 element.$additionalContextProperties = additionalContextProperties;
 
@@ -989,6 +991,7 @@
             if(!tries) {
                 tries = 0;
             }
+            parameters = parameters.replace(/\n\s*/g, '');
             const getter = this.$parseDirectiveGetterParameters(parameters);
             const realContext = context || this.$getContext(element);
 
@@ -1673,6 +1676,7 @@
                     clone.$$item = item;
 
                     // Create the sub context for the item
+                    clone.$parent = element.$parent;
                     model.$createContext(clone, item, additionalProperties);
 
                     // Set the elements before the clone
@@ -1685,8 +1689,7 @@
                             model.$setElementDirective(clone, name, model.$directives[uid].parameters);
                         }
                     });
-                    // clone.$directives = Object.assign({}, element.$directives);
-                    // delete clone.$directives.each;
+
                     // Insert the clone
                     model.$insertRemoveElement(clone, true, ['each'], element);
 
@@ -1811,7 +1814,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '1.1.1',
+        value : '1.1.2',
         writable : false
     });
 
