@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js v1.1.2
+ * emv.js v1.2.0
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -134,11 +134,12 @@
          * @param  {string} upperKey        The key to retrieve this object from the parent object
          */
         constructor(initValue, $root, $parent, upperKey) {
+            this.$observables = new Set(Object.keys(initValue));
+            this.$computed = {};
             this.$callers = {};
             this.$watchers = {};
             this.$root = $root || this;
             this.$parent = $parent;
-            this.$computed = {};
             this.$this = this;
             this.$directives = {};
 
@@ -150,7 +151,7 @@
 
                     let value = object[key];
 
-                    if(key.substr(0, 1) === '$') {
+                    if(key.substr(0, 1) === '$' || !this.$isObserved(key)) {
                         return this[key];
                     }
 
@@ -161,13 +162,16 @@
                             }
                             // Find if this computed already registred in the observable computed
                             if(!this.$callers[key][this.$root.$executingComputed.uid]) {
-                                Object.keys(this.$root.$computed).every(function(computedName) {
-                                    if(this.$root.$computed[computedName] === this.$root.$executingComputed) {
-                                        this.$callers[key][this.$root.$executingComputed.uid] = {
+                                const computed = this.$root.$executingComputed;
+                                const callerObject = computed.object;
+
+                                Object.keys(callerObject.$computed).every(function(computedName) {
+                                    if(callerObject.$computed[computedName] === computed) {
+                                        this.$callers[key][computed.uid] = {
                                             property : computedName,
-                                            reader : this.$root.$executingComputed.reader,
-                                            writer : this.$root.$executingComputed.writer,
-                                            object : this.$root.$executingComputed.object
+                                            reader : computed.reader,
+                                            writer : computed.writer,
+                                            object : computed.object
                                         };
 
                                         return false;
@@ -204,7 +208,7 @@
                         notifyParent = true;
                     }
 
-                    if(internalKey || typeof value === 'function' || value instanceof HTMLElement) {
+                    if(internalKey || typeof value === 'function' || value instanceof HTMLElement || !this.$isObserved(key)) {
                         object[key] = value;
 
                         return true;
@@ -231,7 +235,8 @@
                     else {
                         object[key] = value;
                         if(value instanceof EMV) {
-                            value.$root = this.$root || object;
+                            value.$setRoot(this.$root || object);
+                            // value.$root = this.$root || object;
                             value.$parent = object;
                         }
                     }
@@ -290,6 +295,30 @@
             });
 
             return proxy;
+        }
+
+
+        /**
+         * Set the root object. This method will propagate the root to all of the sub observable elements
+         * @param {EMVObservable} $root The root object to set
+         */
+        $setRoot($root) {
+            this.$root = $root;
+            Object.keys(this).forEach((key) => {
+                if(this[key] instanceof EMVObservable) {
+                    this[key].$setRoot($root);
+                }
+            });
+        }
+
+        /**
+         * Check if a key is observed by the observable
+         * @param   {string}  key The key to check
+         * @returns {boolean}     True if the property is observed, else false
+         */
+        $isObserved(key) {
+            return this.$observables.has(key) ||
+                this.$computed[key];
         }
 
 
@@ -446,6 +475,7 @@
         constructor(initValue, $root, $parent, upperKey) {
             super(initValue, $root, $parent, upperKey);
 
+            this.$observables.add('length');
             this.length = initValue.length;
         }
 
@@ -457,6 +487,15 @@
             return Array.from(this).map((item) => {
                 return item ? item.valueOf() : item;
             });
+        }
+
+        /**
+         * Check if a key is observed by the observable
+         * @param   {string}  key The key to check
+         * @returns {boolean}     True if the property is observed, else false
+         */
+        $isObserved(key) {
+            return !isNaN(key) || key === 'length';
         }
     }
 
@@ -496,9 +535,9 @@
 
             if(handler.read) {
                 this.reader = function(target) {
-                    const previousComputed = object.$executingComputed;
+                    const previousComputed = object.$root.$executingComputed;
 
-                    object.$executingComputed = self;
+                    object.$root.$executingComputed = self;
 
                     let value;
 
@@ -509,7 +548,7 @@
                         value = undefined;
                     }
 
-                    object.$executingComputed = previousComputed;
+                    object.$root.$executingComputed = previousComputed;
 
                     return value;
                 };
@@ -538,9 +577,9 @@
             let computeDirectiveMethod = function(method) {
                 if(binder[method]) {
                     this[method] = function(element, parameters, model) {
-                        const previousDirective = model.$executingDirective;
+                        const previousDirective = model.$root.$executingDirective;
 
-                        model.$executingDirective = {
+                        model.$root.$executingDirective = {
                             element : element,
                             parameters : parameters,
                             model : model,
@@ -586,11 +625,12 @@
         /**
          * Constructor
          * @param {Object} param The initial data of the EMV
+         * @param {Object} $root The root element containing this emv instance
          */
-        constructor(param) {
+        constructor(param, $root) {
             const options = param || {};
 
-            super(options.data || options);
+            super(options.data || options, $root);
 
             // Manage the templates
             this.$templates = {};
@@ -698,6 +738,10 @@
                 escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]),
                 'g'
             );
+
+            if(element.$directives) {
+                return;
+            }
 
             if (element.nodeName.toLowerCase() === 'template') {
                 // Parse templates
@@ -1003,14 +1047,35 @@
                     if(tries > 10) {
                         return undefined;
                     }
-                    const stack = err.stack.split('\n');
                     const getterLines = getter.toString().split('\n');
 
                     const varname = err.message.match(/^[a-z\$_][0-9a-z\$_]*/i).pop();
-                    const match = stack[1].match(/(\d+):(\d+)\)$/);
-                    const lineNumber = match[1] - 1;
+                    let lineNumber;
+                    let columnNumber;
+
+                    if(err.lineNumber) {
+                        lineNumber = err.lineNumber;
+                        columnNumber = err.columnNumber - 1;
+                    }
+                    else {
+                        const stack = err.stack.split('\n');
+
+                        stack.every((line) => {
+                            if(line.match(err.name)) {
+                                return true;
+                            }
+
+                            const match = line.match(/(\d+):(\d+)\)$/);
+
+                            lineNumber = match[1] - 1;
+                            columnNumber = match[2] - 1;
+
+                            return false;
+                        });
+                    }
+
                     const offset = getterLines[lineNumber].indexOf(parameters);
-                    const position = match[2] - 1 - offset;
+                    const position = columnNumber - offset;
                     const expression = parameters.substring(0, position) +
                                         '$this.' + varname +
                                         parameters.substring(position + varname.length);
@@ -1061,16 +1126,14 @@
          * Insert or remove an element from it parent element
          * @param {DOMNode} element     The element to insert or remove form the DOM
          * @param {boolean} value       Defines if the element must be created (true) or removed (false)
-         * @param {array} excludes      The directives to excludes from parse / render, or clean
          * @param {DOMNode} baseon      The element the one to insert / remove is based on
-         * @param {boolean} forceRender If set to true, the content will be parsed and render, event if the node has not
-         *                              been creatted
+         * @param {boolean} force       If set to true, and values et to true, the node will be inserted even if it is already existing
          */
-        $insertRemoveElement(element, value, excludes, baseon, forceRender) {
+        $insertRemoveElement(element, value, baseon, force) {
             const baseElement = baseon || element;
 
             if(value) {
-                const createElement = !baseElement.$parent.contains(element) || forceRender;
+                const createElement = !baseElement.$parent.contains(element) || force;
 
                 if(createElement) {
                     // Insert the node
@@ -1088,7 +1151,6 @@
                         });
                     }
 
-
                     if(before) {
                         if(before.nextElementSibling) {
                             baseElement.$parent.insertBefore(element, before.nextElementSibling);
@@ -1100,16 +1162,6 @@
                     else {
                         baseElement.$parent.insertBefore(element, baseElement.$parent.firstChild);
                     }
-
-                    element.innerHTML = this.$templates[baseElement.$templateName];
-
-                    if(element.childNodes) {
-                        Array.from(element.childNodes).forEach((child) => {
-                            this.$parse(child);
-                        });
-                    }
-                    // this.$parse(element, excludes);
-                    this.$render(element, excludes);
                 }
             }
             else {
@@ -1117,11 +1169,11 @@
 
                 // remove the node
                 if(baseElement.$parent.contains(element)) {
-                    if(element.childNodes) {
-                        Array.from(element.childNodes).forEach((child) => {
-                            this.$clean(child);
-                        });
-                    }
+                    // if(element.childNodes) {
+                    //     Array.from(element.childNodes).forEach((child) => {
+                    //         this.$clean(child);
+                    //     });
+                    // }
                     baseElement.$parent.removeChild(element);
                 }
             }
@@ -1326,6 +1378,9 @@
                             }
                             break;
                         }
+
+                        case 'file' :
+                            return;
 
                         default :
                             element.value = value;
@@ -1574,129 +1629,146 @@
             initElementProperties(element, model);
 
             element.$clones = [];
+
+            const meta = document.createElement('meta');
+
+            meta.$initialElement = element;
+            meta.$uid = element.$uid;
+            meta.$context = element.$context;
+            meta.setAttribute('name', `e-each-${element.$uid}`);
+
+            model.$setElementDirective(meta, 'each', parameters);
+
+            element.parentNode.replaceChild(meta, element);
         },
 
-        update : function(element, parameters, model) {
-            // const element = replacer.$initialElement;
-            let param = model.$getDirectiveValue(parameters, element);
+        update : function(meta, parameters, model) {
+            const element = meta.$initialElement;
+            const param = model.$getDirectiveValue(parameters, element);
 
-            // Remove the element itself
-            if(element.parentNode && element.parentNode.contains(element)) {
-                element.$parent.removeChild(element);
+            if(!param) {
+                // The directive parameters render an empty value, quit the directive
+                return;
             }
 
-            if(param) {
-                let list = param && Array.from('$data' in param ? param.$data || [] : param) || [];
+            let list = param && Array.from('$data' in param ? param.$data || [] : param) || [];
 
-                list = list.filter((item) => item);
+            list = list.filter((item) => item !== undefined && item !== null);
 
-                // Filter the list
-                if(param.$filter) {
-                    list = list.filter(param.$filter);
+            // Filter the list
+            if(param.$filter) {
+                list = list.filter(param.$filter);
+            }
+
+            // Order the list
+            if(param.$sort) {
+                if(typeof param.$sort === 'function') {
+                    list.sort(param.$sort);
                 }
-
-                // Order the list
-                if(param.$sort) {
-                    if(typeof param.$sort === 'function') {
-                        list.sort(param.$sort);
-                    }
-                    else {
-                        list.sort(function(item1, item2) {
-                            return item1[param.$sort] < item2[param.$sort] ? -1 : 1;
-                        });
-                    }
-                }
-
-                if(param.$order && param.$order < 0) {
-                    list.reverse();
-                }
-
-                let offset = param.$offset || 0,
-                    end = offset + (param.$limit || list.length);
-
-                list = list.slice(offset, end);
-
-                // Remove the nodes that are not present anymore in the list
-                let clones = element.$clones.slice();
-
-                clones.forEach((clone) => {
-                    if(list.indexOf(clone.$$item) === -1) {
-                        if(clone.parentNode && clone.parentNode.contains(clone)) {
-                            model.$clean(clone);
-                            model.$insertRemoveElement(clone, false, null, element);
-                        }
-                    }
-                });
-                element.$clones = [];
-
-                // Add new items and move the one that need to be moved
-                list.forEach(function(item, index) {
-                    // Get the real index, because the list is reversed
-                    const realIndex = list.length - 1 - index;
-
-                    const itemPreviousIndex = clones.findIndex((clone) => {
-                        return clone.$$item === item;
+                else {
+                    list.sort(function(item1, item2) {
+                        return item1[param.$sort] < item2[param.$sort] ? -1 : 1;
                     });
+                }
+            }
 
-                    const before = element.$clones.slice()
-                                            .reverse()
-                                            .concat(element.$before);
+            if(param.$order && param.$order < 0) {
+                list.reverse();
+            }
 
-                    if(itemPreviousIndex !== -1) {
-                        // The item already exists
-                        let existingClone = clones[itemPreviousIndex];
+            let offset = param.$offset || 0,
+                end = offset + (param.$limit || list.length);
 
-                        element.$clones.push(existingClone);
+            list = list.slice(offset, end);
 
-                        if(itemPreviousIndex === index) {
-                            // Nothing to do
-                            return;
-                        }
+            // Remove the nodes that are not present anymore in the list
+            let clones = element.$clones.slice();
 
-                        // The item exists but is not at the right place
-                        existingClone.$before = before;
-                        existingClone.$context.$index = realIndex;
-                        model.$insertRemoveElement(existingClone, true, ['each'], element);
+            clones.forEach((clone) => {
+                if(list.indexOf(clone.$$item) === -1 || !clone.$context) {
+                    model.$clean(clone);
+                    if(clone.parentNode && clone.parentNode.contains(clone)) {
+                        clone.parentNode.removeChild(clone);
+                    }
+                }
+            });
+            element.$clones = [];
 
+            // Add new items and move the one that need to be moved
+            list.forEach(function(item, index) {
+                const itemPreviousIndex = clones.findIndex((clone) => {
+                    return clone.$$item === item;
+                });
+
+                const before = element.$clones.slice()
+                                        .reverse()
+                                        .concat(meta)
+                                        .concat(element.$before);
+
+                if(itemPreviousIndex !== -1) {
+                    // The item already exists
+                    let existingClone = clones[itemPreviousIndex];
+
+                    element.$clones.push(existingClone);
+
+                    if(itemPreviousIndex === index) {
+                        // Nothing to do
                         return;
                     }
 
+                    // The item exists but is not at the right place
+                    existingClone.$before = before;
+                    existingClone.$context.$index = index;
+                    model.$insertRemoveElement(existingClone, true, element, true);
 
-                    // The item does not exist, create it
-                    let additionalProperties = {
-                        $index : realIndex
-                    };
+                    return;
+                }
 
-                    if (param.$item) {
-                        additionalProperties[`$${param.$item}`] = item;
+
+                // The item does not exist, create it
+                let additionalProperties = {
+                    $index : index
+                };
+
+                if (param.$item) {
+                    additionalProperties[`$${param.$item}`] = item;
+                }
+
+                const clone = element.cloneNode(true);
+
+                clone.$$item = item;
+
+                // Create the sub context for the item
+                clone.$parent = element.$parent;
+                model.$createContext(clone, item, additionalProperties);
+
+                // Set the elements before the clone
+                clone.$before = before;
+                // Copy the base element directives on the clone, except 'each', to avoid infinite loop
+                Object.keys(element.$directives).forEach((name) => {
+                    if(name !== 'each') {
+                        const uid = element.$directives[name];
+
+                        model.$setElementDirective(clone, name, model.$directives[uid].parameters);
                     }
-
-                    const clone = element.cloneNode(true);
-
-                    clone.$$item = item;
-
-                    // Create the sub context for the item
-                    clone.$parent = element.$parent;
-                    model.$createContext(clone, item, additionalProperties);
-
-                    // Set the elements before the clone
-                    clone.$before = before;
-                    // Copy the base element directives on the clone, except 'each', to avoid infinite loop
-                    Object.keys(element.$directives).forEach((name) => {
-                        if(name !== 'each') {
-                            const uid = element.$directives[name];
-
-                            model.$setElementDirective(clone, name, model.$directives[uid].parameters);
-                        }
-                    });
-
-                    // Insert the clone
-                    model.$insertRemoveElement(clone, true, ['each'], element);
-
-                    // Add the clone to the list of the element clones
-                    element.$clones.push(clone);
                 });
-            }
+
+                // Insert the clone
+                model.$insertRemoveElement(clone, true, element);
+
+                clone.innerHTML = model.$templates[element.$templateName];
+
+                if(clone.childNodes) {
+                    Array.from(clone.childNodes).forEach((child) => {
+                        model.$parse(child);
+                    });
+                }
+
+                model.$render(clone, ['each']);
+
+                // Add the clone to the list of the element clones
+                element.$clones.push(clone);
+            });
         }
     });
 
@@ -1708,7 +1780,11 @@
         update : function(element, parameters, model) {
             let value = Boolean(model.$getDirectiveValue(parameters, element));
 
-            model.$insertRemoveElement(element, value, ['if']);
+            model.$insertRemoveElement(element, value);
+
+            if(value) {
+                model.$render(element, ['if']);
+            }
         }
     });
 
@@ -1720,7 +1796,11 @@
         update : function(element, parameters, model) {
             let value = model.$getDirectiveValue(parameters, element);
 
-            model.$insertRemoveElement(element, !value, ['unless']);
+            model.$insertRemoveElement(element, !value);
+
+            if(!value) {
+                model.$render(element, ['unless']);
+            }
         }
     });
 
@@ -1753,9 +1833,31 @@
                 context = context.$data;
             }
 
+
             if(context) {
+                // Remove the previous context
+                model.$removeContext(element);
+
+                // Create the new context
                 model.$createContext(element, context, additionalProperties);
-                model.$insertRemoveElement(element, true, ['with'], null, true);
+
+                model.$insertRemoveElement(element, true);
+
+                if(element.childNodes) {
+                    Array.from(element.childNodes).forEach((child) => {
+                        model.$clean(child);
+                    });
+                }
+
+                element.innerHTML = model.$templates[element.$templateName];
+
+                if(element.childNodes) {
+                    Array.from(element.childNodes).forEach((child) => {
+                        model.$parse(child);
+                    });
+                }
+
+                model.$render(element, ['with']);
             }
             else {
                 model.$insertRemoveElement(element, false);
@@ -1814,7 +1916,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '1.1.2',
+        value : '1.2.0',
         writable : false
     });
 

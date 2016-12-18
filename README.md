@@ -82,7 +82,7 @@ This code will :
 * Bind the `input#firstname` to emv.firstname
 * Bind the `input#lastname`to emv.lastname
 * Display the value of emv.fullname in the `div#fullname`
-* When the falue of emv.firstname or emv.lastname is modified, the value of emv.fullname is automatically calculated
+* When the value of emv.firstname or emv.lastname is modified, the value of emv.fullname is automatically calculated
 
 # Create an EMV instance
 

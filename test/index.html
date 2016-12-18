@@ -23,37 +23,17 @@
     </head>
 
     <body>
-        <div id="emv">
-            <ul e-with="selected">
-                <li e-each="items">
-                    <span>${name}</span>
-                </li>
-            </ul>
-        </div>
+        <div id="emv" e-with="obj" e-text="text"></div>
 
         <script type="text/javascript" src="../lib/emv.js"></script>
         <script type="text/javascript">
             let emv = new EMV({
-                elements : [
-                    {
-                        items : [
-                            { name : 'item1'},
-                            { name : 'item2'},
-                            { name : 'item3'}
-                        ]
-                    },
-                    {
-                        items : [
-                            { name : 'item4'},
-                            { name : 'item5'}
-                        ]
-                    }
-                ]
+                obj : {
+                    text : 'Hi'
+                }
             });
 
-            emv.selected = emv.elements[0];
-
-            emv.$apply();
+            emv.$apply(document.getElementById('emv'));
         </script>
     </body>
 </html>

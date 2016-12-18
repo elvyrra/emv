@@ -173,20 +173,21 @@ describe('EMV', () => {
 
             expect(emv.str).to.equal('new : Garry; old : world');
 
+            // Obj.sub is not binded, expect str to not change
             emv.obj.sub = 'Hi';
 
-            expect(emv.str).to.equal('new : Hi; old : undefined');
+            expect(emv.str).to.equal('new : Garry; old : world');
 
             // Unwatch
             emv.$unwatch('obj.text');
 
-            emv.obj.text = 'Garry';
+            emv.obj.text = 'Fred';
 
-            expect(emv.str).to.equal('new : Hi; old : undefined');
+            expect(emv.str).to.equal('new : Garry; old : world');
 
             emv.$unwatch('obj.sub', updateStr);
 
-            expect(emv.str).to.equal('new : Hi; old : undefined');
+            expect(emv.str).to.equal('new : Garry; old : world');
 
 
             // Watch an unknwon property
@@ -841,9 +842,7 @@ describe('EMV', () => {
 
                 emv.objectOptions[3] = 'three';
 
-                expect($('#object-options option').length).to.equal(3);
-                expect($('#object-options option').get(2).value).to.equal('3');
-                expect($('#object-options option').get(2).innerText).to.equal('three');
+                expect($('#object-options option').length).to.equal(2);
             });
 
             it('Apply options directive on a non select elemen', () => {
@@ -1228,20 +1227,21 @@ describe('EMV', () => {
                     data : {
                         obj : {
                             text : 'Hello'
-                        }
+                        },
+                        obj2 : undefined
                     }
                 });
 
                 return loadPage('with.html')
 
                 .then((jquery) => {
-                    emv.$apply();
 
                     $ = jquery;
                 });
             });
 
             it('check with directive', () => {
+                emv.$apply();
                 expect($('div').get(0).innerText).to.equal('Hello');
 
                 emv.obj.text = 'Hi';
@@ -1265,7 +1265,6 @@ describe('EMV', () => {
             });
 
             it('Apply the emv on the element that have the with directive', () => {
-                emv.$clean();
                 emv.$apply($('div').get(0));
 
                 expect($('div').get(0).innerText).to.equal('Hello');
