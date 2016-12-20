@@ -65,7 +65,7 @@ const emv = new EMV({
     data : {
         title : 'Contact page',
         firstname : 'John',
-        lastName : 'Doe'
+        lastname : 'Doe'
     },
     computed : {
         fullname : function() {
