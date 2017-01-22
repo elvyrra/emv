@@ -375,7 +375,7 @@ describe('EMV', () => {
                     expect($('#one-class')).to.not.have.class('my-class');
                     expect($('#one-class')).to.have.class('your-class');
 
-                    delete emv.class;
+                    emv.class = '';
                     expect($('#one-class').attr('class')).to.equal('class1');
                 });
             });
@@ -437,7 +437,7 @@ describe('EMV', () => {
 
                     expect($('#object-style').css('background-color')).to.equal('blue');
 
-                    delete emv.obj.weight;
+                    emv.obj.weight = undefined;
 
                     expect($('#object-style').css('font-weight')).to.equal('');
                 });
@@ -583,12 +583,6 @@ describe('EMV', () => {
                 emv.text = 'Youyou';
 
                 expect($('#text-value').val()).to.equal(emv.text);
-            });
-
-            it('update text input deleting value', () => {
-                delete emv.text;
-
-                expect($('#text-value').val()).to.equal('');
             });
 
             it('bind checkbox input', () => {
@@ -756,27 +750,25 @@ describe('EMV', () => {
 
             beforeEach(() => {
                 emv = new EMV({
-                    data : {
-                        options : [
-                            {
-                                value : 1,
-                                label : 'one'
-                            },
-                            {
-                                value : 2,
-                                label : 'two'
-                            }
-                        ],
-
-                        simpleOptions : [
-                            'one',
-                            'two'
-                        ],
-
-                        objectOptions : {
-                            1 : 'one',
-                            2 : 'two'
+                    options : [
+                        {
+                            value : 1,
+                            label : 'one'
+                        },
+                        {
+                            value : 2,
+                            label : 'two'
                         }
+                    ],
+
+                    simpleOptions : [
+                        'one',
+                        'two'
+                    ],
+
+                    objectOptions : {
+                        1 : 'one',
+                        2 : 'two'
                     }
                 });
 

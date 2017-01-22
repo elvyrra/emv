@@ -433,7 +433,7 @@ Examples :
 ```html
 <ul>
     <li e-each="{$data : list, $filter : filter, $sort : 'label', $order : -1, $offset : 1, $limit : 3, $item : 'country'">
-        #${$index} <span e-text="$country.label"></span> (${$this.code})
+        #${$index} <span e-text="country.label"></span> (${$this.code})
     </li>
 </ul>
 ```
@@ -512,7 +512,7 @@ emv.$apply();
 Another alternative notation is available, if you want to name the object in the sub context :
 ```html
 <div e-with="{$data : obj, $as : 'contact'}">
-    <span e-text="first"></span> <span e-text="$contact.last"></span>
+    <span e-text="first"></span> <span e-text="contact.last"></span>
 </div>
 ```
 

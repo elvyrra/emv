@@ -23,17 +23,22 @@
     </head>
 
     <body>
-        <div id="emv" e-with="obj" e-text="text"></div>
+        <ul>
+            <li e-each="list" e-text="label"></li>
+        </ul>
 
         <script type="text/javascript" src="../lib/emv.js"></script>
         <script type="text/javascript">
             let emv = new EMV({
-                obj : {
-                    text : 'Hi'
-                }
+                list : [
+                    {label : 'One'},
+                    {label : 'Two'}
+                ]
             });
 
             emv.$apply(document.getElementById('emv'));
+
+            emv.list.push({label : 'truee'})
         </script>
     </body>
 </html>

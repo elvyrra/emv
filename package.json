@@ -1,6 +1,6 @@
 {
   "name": "emv",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "EMV is a light and powerful two-way data binding system",
   "main": "./dist/emv.js",
   "directories": {
@@ -8,15 +8,20 @@
   },
   "scripts": {
     "test": "rm -Rf coverage && istanbul --include-all-sources --root=./lib cover _mocha",
-    "lint": "eslint ./lib",
-    "uglify": "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv.min.js ./dist/emv.js",
+    "lint": "eslint ./lib/emv.js",
     "build-version": "mkdir -p dist &&  cp ./lib/emv.js ./dist && sed -i \"s/{{ version }}/${npm_package_version}/g\" ./dist/emv.js",
-    "build": "npm run lint && npm run test && npm run build-version && npm run uglify",
+    "build-es5": "babel ./dist/emv.js --out-file ./dist/emv-es5.js --presets=latest",
+    "uglify": "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv.min.js ./dist/emv.js",
+    "uglify-es5": "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv-es5.min.js ./dist/emv-es5.js",
+    "build": "npm run lint && npm run build-version && npm run build-es5 && npm run uglify && npm run uglify-es5",
     "commit": "commit-wizard"
   },
   "author": "Sebastien Lecocq",
   "license": "ISC",
   "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-preset-env": "^1.1.8",
+    "babel-preset-latest": "^6.16.0",
     "chai": "^3.5.0",
     "chai-cheerio": "^1.0.0",
     "chai-jquery": "^2.0.0",
