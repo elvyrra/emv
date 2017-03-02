@@ -326,7 +326,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 var result = {};
 
                 Object.keys(this).forEach(function (key) {
-                    result[key] = _this5[key] ? _this5[key].valueOf() : _this5[key];
+                    if (key.substr(0, 1) !== '$' && !_this5.$additionalProperties.has(key)) {
+                        result[key] = _this5[key] ? _this5[key].valueOf() : _this5[key];
+                    }
                 });
 
                 return result;
@@ -442,8 +444,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             _this7.$observe('length', initValue.length, upperKey);
 
             _this7.$watch('length', function () {
-                Object.keys(_this7).forEach(function (index) {
-                    _this7.$observe(index, _this7[index], upperKey);
+                // Object.keys(this).forEach((index) => {
+                //     this.$observe(index, this[index], upperKey);
+                // });
+                _this7.forEach(function (item, index) {
+                    _this7.$observe(index, item, upperKey);
                 });
             });
             return _this7;
@@ -1909,35 +1914,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }
 
         return originalIsArray(variable);
-    };
-
-    // Overwrite Object.keys to return only real keys of an EMVObervable
-    var originalObjectKeys = Object.keys;
-
-    Object.keys = function (variable) {
-        if (variable instanceof EMVObservableArray) {
-            var _ret2 = function () {
-                var keys = [];
-
-                variable.forEach(function (value, index) {
-                    keys.push(index.toString());
-                });
-
-                return {
-                    v: keys
-                };
-            }();
-
-            if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
-        } else if (variable instanceof EMVObservable) {
-            var keys = originalObjectKeys(variable);
-
-            return keys.filter(function (key) {
-                return key.substr(0, 1) !== '$' && !variable.$additionalProperties.has(key);
-            });
-        }
-
-        return originalObjectKeys(variable);
     };
 
     return EMV;

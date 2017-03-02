@@ -299,7 +299,9 @@
             let result = {};
 
             Object.keys(this).forEach((key) => {
-                result[key] = this[key] ? this[key].valueOf() : this[key];
+                if(key.substr(0, 1) !== '$' && !this.$additionalProperties.has(key)) {
+                    result[key] = this[key] ? this[key].valueOf() : this[key];
+                }
             });
 
             return result;
@@ -396,8 +398,11 @@
             this.$observe('length', initValue.length, upperKey);
 
             this.$watch('length', () => {
-                Object.keys(this).forEach((index) => {
-                    this.$observe(index, this[index], upperKey);
+                // Object.keys(this).forEach((index) => {
+                //     this.$observe(index, this[index], upperKey);
+                // });
+                this.forEach((item, index) => {
+                    this.$observe(index, item, upperKey);
                 });
             });
         }
@@ -1817,30 +1822,6 @@
         }
 
         return originalIsArray(variable);
-    };
-
-    // Overwrite Object.keys to return only real keys of an EMVObervable
-    const originalObjectKeys = Object.keys;
-
-    Object.keys = function(variable) {
-        if(variable instanceof EMVObservableArray) {
-            const keys = [];
-
-            variable.forEach((value, index) => {
-                keys.push(index.toString());
-            });
-
-            return keys;
-        }
-        else if(variable instanceof EMVObservable) {
-            const keys = originalObjectKeys(variable);
-
-            return keys.filter((key) => {
-                return key.substr(0, 1) !== '$' && !variable.$additionalProperties.has(key);
-            });
-        }
-
-        return originalObjectKeys(variable);
     };
 
     return EMV;
