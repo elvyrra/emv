@@ -3,7 +3,7 @@ EMV is a JavaScript data-bind system. You could say "Again another one ?". But t
 * EMV is based on ES6 Proxies, and have been written in ES6
 * EMV is very light, and powerful. Comparely to other systems, when a variable is modified, only concerned nodes are woken and not all the view
 * EMV is ONLY a MVVM system, not integrating a whole framework. It means too, that you can use EMV with other frameworks used for other usecases (data management, Websockets, ...)
-* The weight of EMV is lighter that any existing system (15.8 Ko in it minified version)
+* The weight of EMV is lighter that any existing system (19,5 Ko in it minified version)
 
 The goal when developping EMV was to group what is very useful in each existing system like knockout, angular, vuejs, and reject what it is not.
 
