@@ -1,0 +1,9 @@
+<html>
+    <body>
+        <div id="text">${value :: json :: upper}</div>
+
+        <input type="text" id="attr" value="${value :: json :: upper}">
+
+        <input type="text" id="e-attr" e-value="{$data : value, $transform : ['json', 'upper']}" />
+    </body>
+</html>

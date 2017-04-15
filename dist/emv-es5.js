@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 2.0.0-2
+ * emv.js 3.0.0
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -139,102 +139,100 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         _createClass(EMVObservable, [{
             key: '$observe',
             value: function $observe(key, initValue, upperKey) {
+                var _this3 = this;
+
                 if (this.$observed.has(key)) {
                     return;
                 }
 
                 var handler = {
-                    get: function () {
-                        var _this3 = this;
+                    get: function get() {
+                        var value = _this3.$object[key];
 
-                        var value = this.$object[key];
-
-                        if (this.$root && typeof value !== 'function') {
-                            if (this.$root.$executingComputed) {
-                                if (!this.$callers[key]) {
-                                    this.$callers[key] = {};
+                        if (_this3.$root && typeof value !== 'function') {
+                            if (_this3.$root.$executingComputed) {
+                                if (!_this3.$callers[key]) {
+                                    _this3.$callers[key] = {};
                                 }
                                 // Find if this computed already registred in the observable computed
-                                if (!this.$callers[key][this.$root.$executingComputed.uid]) {
-                                    (function () {
-                                        var computed = _this3.$root.$executingComputed;
-                                        var callerObject = computed.object;
+                                if (!_this3.$callers[key][_this3.$root.$executingComputed.uid]) {
+                                    var computed = _this3.$root.$executingComputed;
+                                    var callerObject = computed.object;
 
-                                        Object.keys(callerObject.$computed).every(function (computedName) {
-                                            if (callerObject.$computed[computedName] === computed) {
-                                                this.$callers[key][computed.uid] = {
-                                                    property: computedName,
-                                                    reader: computed.reader,
-                                                    writer: computed.writer,
-                                                    object: computed.object
-                                                };
+                                    Object.keys(callerObject.$computed).every(function (computedName) {
+                                        if (callerObject.$computed[computedName] === computed) {
+                                            _this3.$callers[key][computed.uid] = {
+                                                property: computedName,
+                                                reader: computed.reader,
+                                                writer: computed.writer,
+                                                object: computed.object
+                                            };
 
-                                                return false;
-                                            }
+                                            return false;
+                                        }
 
-                                            return true;
-                                        }.bind(_this3));
-                                    })();
+                                        return true;
+                                    });
                                 }
                             }
 
-                            if (this.$root.$executingDirective) {
-                                if (!this.$directives[key]) {
-                                    this.$directives[key] = new Set([]);
+                            if (_this3.$root.$executingDirective) {
+                                if (!_this3.$directives[key]) {
+                                    _this3.$directives[key] = new Set([]);
                                 }
 
-                                this.$directives[key].add(this.$root.$executingDirective.uid);
+                                _this3.$directives[key].add(_this3.$root.$executingDirective.uid);
                             }
                         }
 
                         return value;
-                    }.bind(this),
+                    },
 
-                    set: function (value) {
+                    set: function set(value) {
                         var notifyParent = false;
 
-                        if (!(key in this.$object) && !this.$root.$creatingContext) {
+                        if (!(key in _this3.$object) && !_this3.$root.$creatingContext) {
                             // The property is created on the object, it means the parent object has been modified
                             notifyParent = true;
                         }
 
                         if (typeof value === 'function' || value instanceof HTMLElement) {
-                            this.$object[key] = value;
+                            _this3.$object[key] = value;
 
                             return true;
                         }
 
-                        var oldValue = this.$object[key];
+                        var oldValue = _this3.$object[key];
 
                         if (!isPrimitive(value) && !(value instanceof EMVObservable)) {
                             if (Array.isArray(value)) {
-                                this.$object[key] = new EMVObservableArray(value, this.$root || this, this, key);
+                                _this3.$object[key] = new EMVObservableArray(value, _this3.$root || _this3, _this3, key);
                             } else {
-                                this.$object[key] = new EMVObservable(value, this.$root || this, this, key);
+                                _this3.$object[key] = new EMVObservable(value, _this3.$root || _this3, _this3, key);
                             }
                         } else {
-                            this.$object[key] = value;
+                            _this3.$object[key] = value;
                             if (value instanceof EMV) {
-                                value.$setRoot(this.$root || this);
-                                value.$parent = this;
+                                value.$setRoot(_this3.$root || _this3);
+                                value.$parent = _this3;
                             }
                         }
 
-                        if (this.$computed[key] && this.$computed[key].writer) {
+                        if (_this3.$computed[key] && _this3.$computed[key].writer) {
                             try {
-                                this.$computed[key].writer(this, value, oldValue);
+                                _this3.$computed[key].writer(_this3, value, oldValue);
                             } catch (err) {}
                         }
                         if (oldValue !== value) {
-                            this.$notifySubscribers(key, value, oldValue);
+                            _this3.$notifySubscribers(key, value, oldValue);
 
-                            if (notifyParent && this.$parent) {
-                                this.$parent.$notifySubscribers(upperKey, this.$parent);
+                            if (notifyParent && _this3.$parent) {
+                                _this3.$parent.$notifySubscribers(upperKey, _this3.$parent);
                             }
                         }
 
                         return true;
-                    }.bind(this),
+                    },
 
                     enumerable: true,
                     configurable: true
@@ -274,6 +272,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$notifySubscribers',
             value: function $notifySubscribers(key, value, oldValue) {
+                var _this5 = this;
+
                 if (!key) {
                     return;
                 }
@@ -284,24 +284,24 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                 if (this.$callers[key]) {
                     Object.keys(this.$callers[key]).forEach(function (uid) {
-                        var caller = this.$callers[key][uid];
+                        var caller = _this5.$callers[key][uid];
 
                         caller.object[caller.property] = caller.reader(caller.object);
-                    }.bind(this));
+                    });
                 }
 
                 if (this.$watchers[key]) {
                     Object.keys(this.$watchers[key]).forEach(function (uid) {
-                        this.$watchers[key][uid].call(this, value, oldValue);
-                    }.bind(this));
+                        _this5.$watchers[key][uid].call(_this5, value, oldValue);
+                    });
                 }
 
                 if (this.$directives[key]) {
                     this.$directives[key].forEach(function (uid) {
-                        var directive = this.$root.$directives[uid];
+                        var directive = _this5.$root.$directives[uid];
 
                         if (!directive) {
-                            this.$directives[key].delete(uid);
+                            _this5.$directives[key].delete(uid);
 
                             return;
                         }
@@ -309,7 +309,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         if (directive && directive.handler.update) {
                             directive.handler.update(directive.element, directive.parameters, directive.model);
                         }
-                    }.bind(this));
+                    });
                 }
             }
 
@@ -321,12 +321,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: 'valueOf',
             value: function valueOf() {
-                var _this5 = this;
+                var _this6 = this;
 
                 var result = {};
 
                 Object.keys(this).forEach(function (key) {
-                    result[key] = _this5[key] ? _this5[key].valueOf() : _this5[key];
+                    result[key] = _this6[key] ? _this6[key].valueOf() : _this6[key];
                 });
 
                 return result;
@@ -353,11 +353,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$watch',
             value: function $watch(prop, handler) {
-                var _this6 = this;
+                var _this7 = this;
 
                 if (Array.isArray(prop)) {
                     prop.forEach(function (subprop) {
-                        _this6.$watch(subprop, handler);
+                        _this7.$watch(subprop, handler);
                     });
 
                     return;
@@ -437,16 +437,16 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         function EMVObservableArray(initValue, $root, $parent, upperKey) {
             _classCallCheck(this, EMVObservableArray);
 
-            var _this7 = _possibleConstructorReturn(this, (EMVObservableArray.__proto__ || Object.getPrototypeOf(EMVObservableArray)).call(this, initValue, $root, $parent, upperKey));
+            var _this8 = _possibleConstructorReturn(this, (EMVObservableArray.__proto__ || Object.getPrototypeOf(EMVObservableArray)).call(this, initValue, $root, $parent, upperKey));
 
-            _this7.$observe('length', initValue.length, upperKey);
+            _this8.$observe('length', initValue.length, upperKey);
 
-            _this7.$watch('length', function () {
-                _this7.forEach(function (item, index) {
-                    _this7.$observe(index, item, upperKey);
+            _this8.$watch('length', function () {
+                _this8.forEach(function (item, index) {
+                    _this8.$observe(index, item, upperKey);
                 });
             });
-            return _this7;
+            return _this8;
         }
 
         /**
@@ -543,15 +543,17 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
          *                                      which this directive depends on, is modified
          */
         function EMVDirective(name, binder) {
+            var _this9 = this;
+
             _classCallCheck(this, EMVDirective);
 
             this.name = name;
 
             var self = this;
 
-            var computeDirectiveMethod = function (method) {
+            var computeDirectiveMethod = function computeDirectiveMethod(method) {
                 if (binder[method]) {
-                    this[method] = function (element, parameters, model) {
+                    _this9[method] = function (element, parameters, model) {
                         var previousDirective = model.$root.$executingDirective;
 
                         model.$root.$executingDirective = {
@@ -559,7 +561,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                             parameters: parameters,
                             model: model,
                             handler: self,
-                            uid: this.getUid(element),
+                            uid: _this9.getUid(element),
                             name: name
                         };
 
@@ -568,9 +570,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         model.$executingDirective = previousDirective;
 
                         return result;
-                    }.bind(this);
+                    };
                 }
-            }.bind(this);
+            };
 
             computeDirectiveMethod('init');
             computeDirectiveMethod('bind');
@@ -617,37 +619,37 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             var options = param || {};
 
             // Manage the templates
-            var _this8 = _possibleConstructorReturn(this, (EMV.__proto__ || Object.getPrototypeOf(EMV)).call(this, options.data || options, $root));
+            var _this10 = _possibleConstructorReturn(this, (EMV.__proto__ || Object.getPrototypeOf(EMV)).call(this, options.data || options, $root));
 
-            _this8.$templates = {};
+            _this10.$templates = {};
 
             // Manage the executing computed
-            _this8.$executingComputed = null;
+            _this10.$executingComputed = null;
 
             // Manage the executing directive
-            _this8.$executingDirective = null;
+            _this10.$executingDirective = null;
 
             // Manage if a context is creating
-            _this8.$creatingContext = false;
+            _this10.$creatingContext = false;
 
-            _this8.$directives = {};
+            _this10.$directives = {};
 
             if (options.computed) {
                 Object.keys(options.computed).forEach(function (key) {
-                    this.$computed[key] = new EMVComputed(options.computed[key], this);
+                    _this10.$computed[key] = new EMVComputed(options.computed[key], _this10);
 
-                    this.$observe(key);
-                }.bind(_this8));
+                    _this10.$observe(key);
+                });
             }
 
-            Object.keys(_this8.$computed).forEach(function (key) {
-                if (_this8.$computed[key].reader) {
-                    _this8[key] = _this8.$computed[key].reader(_this8);
+            Object.keys(_this10.$computed).forEach(function (key) {
+                if (_this10.$computed[key].reader) {
+                    _this10[key] = _this10.$computed[key].reader(_this10);
                 } else {
-                    _this8[key] = undefined;
+                    _this10[key] = undefined;
                 }
             });
-            return _this8;
+            return _this10;
         }
 
         /**
@@ -681,7 +683,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$clean',
             value: function $clean(element, excludes) {
-                var _this9 = this;
+                var _this11 = this;
 
                 var elem = element || this.$rootElement;
 
@@ -694,7 +696,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         if (!excludes || excludes.indexOf(directive) === -1) {
                             var uid = elem.$directives[directive];
 
-                            delete _this9.$directives[uid];
+                            delete _this11.$directives[uid];
                             delete elem.$directives[directive];
                         }
                     });
@@ -702,7 +704,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                 if (elem.children) {
                     Array.from(elem.children).forEach(function (child) {
-                        _this9.$clean(child);
+                        _this11.$clean(child);
                     });
                 }
 
@@ -727,6 +729,77 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             }
 
             /**
+             * Parse a transformation, to get the name and the parameters of the transformation
+             * @param   {string} transformation The transformation expression to parse
+             * @returns {Object}                The parse transformation, with the keys 'name', and 'parameters'
+             */
+
+        }, {
+            key: '$parseDirectiveTransformation',
+            value: function $parseDirectiveTransformation(transformation) {
+                var match = /^(\w+)(\((.+)\))?$/.exec(transformation);
+
+                if (match) {
+                    var name = match[1];
+                    var param = '{' + (match[3] || '') + '}';
+
+                    return {
+                        name: name,
+                        parameters: param
+                    };
+                }
+
+                throw new Error();
+            }
+
+            /**
+             * Parse a handlebars directive
+             * @param   {DOMNode} element The element to parse
+             * @param   {string}  value   The string to parse
+             * @returns {string}          The parsed handlebars directive
+             */
+
+        }, {
+            key: '$parseHandlebardDirective',
+            value: function $parseHandlebardDirective(element, value) {
+                var _this12 = this;
+
+                var safeStringRegex = new RegExp(escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]), 'g');
+
+                var match = value.match(safeStringRegex);
+
+                if (match) {
+                    this.$getContext(element.parentNode);
+
+                    var parameters = value.replace(safeStringRegex, function (match, expression) {
+                        var steps = expression.split('::').map(function (step) {
+                            return step.trim();
+                        });
+
+                        var result = steps[0];
+
+                        if (steps.length > 1) {
+                            steps.slice(1).forEach(function (transformation) {
+                                try {
+                                    var transform = _this12.$parseDirectiveTransformation(transformation);
+
+                                    result = 'EMV.transformations.' + transform.name + '(' + result + ', ' + transform.parameters + ')';
+                                } catch (err) {
+                                    throw new EMVError('Error while parsing directive transformation : ' + value);
+                                }
+                            });
+                        }
+
+                        return '\' + ' + result + ' + \'';
+                    });
+
+                    return parameters;
+                }
+
+                return null;
+            }
+
+            /**
              * Parse the directives on the element and init them
              * @param   {DOMNode} element  The element to parse
              * @param   {Array} excludes The directives to no parse on the element
@@ -735,9 +808,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$parse',
             value: function $parse(element, excludes) {
-                var _this10 = this;
-
-                var safeStringRegex = new RegExp(escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]), 'g');
+                var _this13 = this;
 
                 if (element.$directives) {
                     return;
@@ -749,15 +820,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                     element.parentNode.removeChild(element);
                 } else if (element.nodeName.toLowerCase() === '#text') {
                     // Parse raw directives in texts
-                    var value = element.textContent;
-                    var matchSafe = value.match(safeStringRegex);
+                    var parameters = this.$parseHandlebardDirective(element, element.textContent);
 
-                    if (matchSafe) {
-                        this.$getContext(element.parentNode);
-
-                        var parameters = value.replace(safeStringRegex, '\' + $1 + \'');
-
-                        // Safe text
+                    if (parameters !== null) {
                         this.$setElementDirective(element, 'text', '\'' + parameters + '\'');
                     }
                 } else if (element.attributes) {
@@ -770,11 +835,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                 var _parameters = element.getAttribute(attribute);
                                 var directive = EMV.directives[name];
 
-                                _this10.$getContext(element);
-                                _this10.$setElementDirective(element, name, _parameters);
+                                _this13.$getContext(element);
+                                _this13.$setElementDirective(element, name, _parameters);
 
                                 if (directive.init) {
-                                    directive.init.call(_this10, element, _parameters, _this10);
+                                    directive.init.call(_this13, element, _parameters, _this13);
                                 }
                             }
                         }
@@ -784,10 +849,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                     Array.from(element.attributes).forEach(function (attribute) {
                         var attributeName = attribute.name;
                         var value = attribute.textContent;
-                        var matchSafe = value.match(safeStringRegex);
 
-                        if (matchSafe !== null) {
-                            var attrDirective = _this10.$directives[element.$directives && element.$directives.attr];
+                        var attrValue = _this13.$parseHandlebardDirective(element, value);
+
+                        if (attrValue !== null) {
+                            var attrDirective = _this13.$directives[element.$directives && element.$directives.attr];
 
                             var _parameters2 = attrDirective && attrDirective.parameters || '';
 
@@ -795,18 +861,18 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                 _parameters2 = _parameters2.substring(1, _parameters2.length - 1) + ',';
                             }
 
-                            _parameters2 += '\'' + attributeName + '\' : \'' + value.replace(safeStringRegex, '\' + $1 + \'') + '\'';
+                            _parameters2 += '\'' + attributeName + '\' : \'' + attrValue + '\'';
 
                             _parameters2 = '{' + _parameters2 + '}';
 
-                            _this10.$setElementDirective(element, 'attr', _parameters2);
+                            _this13.$setElementDirective(element, 'attr', _parameters2);
                         }
                     });
                 }
 
                 if (element.childNodes) {
                     Array.from(element.childNodes).forEach(function (child) {
-                        _this10.$parse(child);
+                        _this13.$parse(child);
                     });
                 }
             }
@@ -852,7 +918,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$render',
             value: function $render(element, excludes) {
-                var _this11 = this;
+                var _this14 = this;
 
                 element.$stopRenderingPropagation = false;
 
@@ -886,7 +952,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                 if (!element.$stopRenderingPropagation && element.childNodes) {
                     Array.from(element.childNodes).forEach(function (child) {
-                        _this11.$render(child);
+                        _this14.$render(child);
                     });
                 }
             }
@@ -964,13 +1030,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$removeContext',
             value: function $removeContext(element) {
-                var _this12 = this;
+                var _this15 = this;
 
                 delete element.$context;
 
                 if (element.children) {
                     Array.from(element.children).forEach(function (child) {
-                        _this12.$removeContext(child);
+                        _this15.$removeContext(child);
                     });
                 }
             }
@@ -1052,12 +1118,33 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$getDirectiveValue',
             value: function $getDirectiveValue(parameters, element, context) {
+                var _this16 = this;
+
                 var expression = parameters.replace(/\n\s*/g, '');
                 var getter = this.$parseDirectiveGetterParameters(expression);
                 var realContext = context || this.$getContext(element);
 
                 try {
-                    return getter(realContext);
+                    var data = getter(realContext);
+
+                    if ((typeof data === 'undefined' ? 'undefined' : _typeof(data)) === 'object' && data.$transform && '$data' in data) {
+                        if (!Array.isArray(data.$transform)) {
+                            data.$transform = [data.$transform];
+                        }
+
+                        var value = data.$data;
+
+                        data.$transform.forEach(function (transformation) {
+                            var transform = _this16.$parseDirectiveTransformation(transformation);
+                            var param = new Function('', 'return ' + transform.parameters + ';');
+
+                            value = EMV.transformations[transform.name](value, param());
+                        });
+
+                        return value;
+                    }
+
+                    return data;
                 } catch (err) {
                     return undefined;
                 }
@@ -1090,12 +1177,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 try {
                     setter(this.$getContext(element), value);
                 } catch (err) {
-                    if (err.name === 'ReferenceError') {
-                        // If the variable does not exist in the context, add '$this' at start to avoid ReferenceError
-                        var expression = '$this.' + parameters;
-
-                        setter(expression);
-                    }
+                    throw new EMVError(err.message);
                 }
             }
 
@@ -1167,6 +1249,18 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             key: 'directive',
             value: function directive(name, binder) {
                 this.directives[name] = new EMVDirective(name, binder);
+            }
+
+            /**
+             * Create a filetr for EMV
+             * @param   {string}   name   The filter name
+             * @param   {Function} filter The filter method. This functions takes only the value to transform as parameter
+             */
+
+        }, {
+            key: 'transform',
+            value: function transform(name, filter) {
+                this.transformations[name] = filter;
             }
         }]);
 
@@ -1881,6 +1975,69 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }
     });
 
+    /**
+     * The EMV filters
+     */
+    EMV.transformations = {};
+
+    // Uppercase filter
+    EMV.transform('upper', function (value) {
+        return typeof value === 'string' && value.toUpperCase() || value;
+    });
+
+    // Lowercase filter
+    EMV.transform('lower', function (value) {
+        return typeof value === 'string' && value.toLowerCase() || value;
+    });
+
+    // Put the first character upper case, then the following lowercases
+    EMV.transform('ucfirst', function (value) {
+        if (typeof value !== 'string') {
+            return value;
+        }
+
+        return value.substr(0, 1).toUpperCase() + value.substr(1);
+    });
+
+    // Put each word with a capital first letter
+    EMV.transform('ucwords', function (value) {
+        if (typeof value !== 'string') {
+            return value;
+        }
+
+        return value.replace(/(^|\s)(.)/g, function (match, sep, char) {
+            return sep + char.toUpperCase();
+        });
+    });
+
+    // Write the object as JSON
+    EMV.transform('json', function (value) {
+        return JSON.stringify(value.valueOf());
+    });
+
+    // Format a number
+    EMV.transform('number', function (value, parameters) {
+        if (typeof value !== 'number') {
+            return value;
+        }
+
+        var result = value;
+
+        if (parameters.decimals !== undefined) {
+            result = result.toFixed(parameters.decimals);
+        }
+
+        if (parameters.thousandSep) {
+            result = result.replace(/\B(?=(?:\d{3})+(?!\d))/g, parameters.thousandSep);
+        }
+
+        if (parameters.decimalSep) {
+            result = result.replace('.', parameters.decimalSep);
+        }
+
+        return result;
+    });
+
     // Define the default EMV configuration
     EMV.config = {
         attributePrefix: 'e',
@@ -1889,7 +2046,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '2.0.0-2',
+        value: '3.0.0',
         writable: false
     });
 
@@ -1916,23 +2073,17 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     Object.keys = function (variable) {
         if (variable instanceof EMVObservableArray) {
-            var _ret2 = function () {
-                var keys = [];
+            var keys = [];
 
-                variable.forEach(function (value, index) {
-                    keys.push(index.toString());
-                });
+            variable.forEach(function (value, index) {
+                keys.push(index.toString());
+            });
 
-                return {
-                    v: keys
-                };
-            }();
-
-            if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
+            return keys;
         } else if (variable instanceof EMVObservable) {
-            var keys = originalObjectKeys(variable);
+            var _keys = originalObjectKeys(variable);
 
-            return keys.filter(function (key) {
+            return _keys.filter(function (key) {
                 return key.substr(0, 1) !== '$' && !(variable.$additionalProperties && variable.$additionalProperties.has(key));
             });
         }

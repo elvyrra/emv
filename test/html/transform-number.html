@@ -1,0 +1,12 @@
+<html>
+    <body>
+        <div id="simple">${value :: number}</div>
+        <div id="full">${value :: number(decimals : 2, decimalSep : ',', thousandSep : ' ')}</div>
+
+        <input type="text" id="attr" value="${value :: number(decimals : 2, decimalSep : ',', thousandSep : ' ')}">
+
+        <input type="text" id="e-attr" e-value="{$data : value, $transform : 'number(decimals : 2, decimalSep : \',\', thousandSep : \' \')'}" />
+
+        <div id="wrong">${text :: number}
+    </body>
+</html>

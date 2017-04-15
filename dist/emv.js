@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 2.0.0-2
+ * emv.js 3.0.0
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -126,7 +126,7 @@
             }
 
             const handler = {
-                get : function() {
+                get : () => {
                     let value = this.$object[key];
 
                     if(this.$root && typeof value !== 'function') {
@@ -139,7 +139,7 @@
                                 const computed = this.$root.$executingComputed;
                                 const callerObject = computed.object;
 
-                                Object.keys(callerObject.$computed).every(function(computedName) {
+                                Object.keys(callerObject.$computed).every((computedName) => {
                                     if(callerObject.$computed[computedName] === computed) {
                                         this.$callers[key][computed.uid] = {
                                             property : computedName,
@@ -152,7 +152,7 @@
                                     }
 
                                     return true;
-                                }.bind(this));
+                                });
                             }
                         }
 
@@ -166,9 +166,9 @@
                     }
 
                     return value;
-                }.bind(this),
+                },
 
-                set : function(value) {
+                set : (value) => {
                     let notifyParent = false;
 
                     if(!(key in this.$object) && !this.$root.$creatingContext) {
@@ -215,7 +215,7 @@
                     }
 
                     return true;
-                }.bind(this),
+                },
 
                 enumerable : true,
                 configurable : true
@@ -257,21 +257,21 @@
             }
 
             if(this.$callers[key]) {
-                Object.keys(this.$callers[key]).forEach(function(uid) {
+                Object.keys(this.$callers[key]).forEach((uid) => {
                     const caller = this.$callers[key][uid];
 
                     caller.object[caller.property] = caller.reader(caller.object);
-                }.bind(this));
+                });
             }
 
             if(this.$watchers[key]) {
-                Object.keys(this.$watchers[key]).forEach(function(uid) {
+                Object.keys(this.$watchers[key]).forEach((uid) => {
                     this.$watchers[key][uid].call(this, value, oldValue);
-                }.bind(this));
+                });
             }
 
             if(this.$directives[key]) {
-                this.$directives[key].forEach(function(uid) {
+                this.$directives[key].forEach((uid) => {
                     const directive = this.$root.$directives[uid];
 
                     if(!directive) {
@@ -287,7 +287,7 @@
                             directive.model
                         );
                     }
-                }.bind(this));
+                });
             }
         }
 
@@ -334,7 +334,7 @@
 
             observable = this.$this;
 
-            propSteps.forEach(function(step) {
+            propSteps.forEach((step) =>{
                 observable = observable[step];
             });
 
@@ -364,7 +364,7 @@
 
             observable = this.$this;
 
-            propSteps.forEach(function(step) {
+            propSteps.forEach((step) => {
                 observable = observable[step];
             });
 
@@ -488,9 +488,9 @@
 
             const self = this;
 
-            let computeDirectiveMethod = function(method) {
+            let computeDirectiveMethod = (method) => {
                 if(binder[method]) {
-                    this[method] = function(element, parameters, model) {
+                    this[method] = (element, parameters, model) => {
                         const previousDirective = model.$root.$executingDirective;
 
                         model.$root.$executingDirective = {
@@ -507,9 +507,9 @@
                         model.$executingDirective = previousDirective;
 
                         return result;
-                    }.bind(this);
+                    };
                 }
-            }.bind(this);
+            };
 
             computeDirectiveMethod('init');
             computeDirectiveMethod('bind');
@@ -561,11 +561,11 @@
             this.$directives = {};
 
             if(options.computed) {
-                Object.keys(options.computed).forEach(function(key) {
+                Object.keys(options.computed).forEach((key) => {
                     this.$computed[key] = new EMVComputed(options.computed[key], this);
 
                     this.$observe(key);
-                }.bind(this));
+                });
             }
 
             Object.keys(this.$computed).forEach((key) => {
@@ -644,17 +644,81 @@
             this.$templates[name] = parsedHtml;
         }
 
+
+        /**
+         * Parse a transformation, to get the name and the parameters of the transformation
+         * @param   {string} transformation The transformation expression to parse
+         * @returns {Object}                The parse transformation, with the keys 'name', and 'parameters'
+         */
+        $parseDirectiveTransformation(transformation) {
+            const match = (/^(\w+)(\((.+)\))?$/).exec(transformation);
+
+            if(match) {
+                const name = match[1];
+                const param = `{${match[3] || ''}}`;
+
+                return {
+                    name : name,
+                    parameters : param
+                };
+            }
+
+            throw new Error();
+        }
+
+        /**
+         * Parse a handlebars directive
+         * @param   {DOMNode} element The element to parse
+         * @param   {string}  value   The string to parse
+         * @returns {string}          The parsed handlebars directive
+         */
+        $parseHandlebardDirective(element, value) {
+            const safeStringRegex = new RegExp(
+                escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]),
+                'g'
+            );
+
+            const match = value.match(safeStringRegex);
+
+            if (match) {
+                this.$getContext(element.parentNode);
+
+                const parameters = value.replace(safeStringRegex, (match, expression) => {
+                    var steps = expression.split('::').map((step) => {
+                        return step.trim();
+                    });
+
+                    let result = steps[0];
+
+                    if(steps.length > 1) {
+                        steps.slice(1).forEach((transformation) => {
+                            try {
+                                const transform = this.$parseDirectiveTransformation(transformation);
+
+                                result = `EMV.transformations.${transform.name}(${result}, ${transform.parameters})`;
+                            }
+                            catch(err) {
+                                throw new EMVError(`Error while parsing directive transformation : ${value}`);
+                            }
+                        });
+                    }
+
+                    return `' + ${result} + '`;
+                });
+
+                return parameters;
+            }
+
+            return null;
+        }
+
+
         /**
          * Parse the directives on the element and init them
          * @param   {DOMNode} element  The element to parse
          * @param   {Array} excludes The directives to no parse on the element
          */
         $parse(element, excludes) {
-            const safeStringRegex = new RegExp(
-                escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]),
-                'g'
-            );
-
             if(element.$directives) {
                 return;
             }
@@ -666,15 +730,9 @@
             }
             else if(element.nodeName.toLowerCase() === '#text') {
                 // Parse raw directives in texts
-                const value = element.textContent;
-                const matchSafe = value.match(safeStringRegex);
+                const parameters = this.$parseHandlebardDirective(element, element.textContent);
 
-                if (matchSafe) {
-                    this.$getContext(element.parentNode);
-
-                    const parameters = value.replace(safeStringRegex, '\' + $1 + \'');
-
-                    // Safe text
+                if(parameters !== null) {
                     this.$setElementDirective(element, 'text', `'${parameters}'`);
                 }
             }
@@ -702,9 +760,10 @@
                 Array.from(element.attributes).forEach((attribute) => {
                     const attributeName = attribute.name;
                     const value = attribute.textContent;
-                    const matchSafe = value.match(safeStringRegex);
 
-                    if(matchSafe !== null) {
+                    const attrValue = this.$parseHandlebardDirective(element, value);
+
+                    if(attrValue !== null) {
                         let attrDirective = this.$directives[element.$directives && element.$directives.attr];
 
                         let parameters = attrDirective && attrDirective.parameters || '';
@@ -713,7 +772,7 @@
                             parameters = parameters.substring(1, parameters.length - 1) + ',';
                         }
 
-                        parameters += `'${attributeName}' : '${value.replace(safeStringRegex, '\' + $1 + \'')}'`;
+                        parameters += `'${attributeName}' : '${attrValue}'`;
 
                         parameters = `{${parameters}}`;
 
@@ -947,7 +1006,26 @@
             const realContext = context || this.$getContext(element);
 
             try {
-                return getter(realContext);
+                const data = getter(realContext);
+
+                if(typeof data === 'object' && data.$transform && '$data' in data) {
+                    if(!Array.isArray(data.$transform)) {
+                        data.$transform = [data.$transform];
+                    }
+
+                    let value = data.$data;
+
+                    data.$transform.forEach((transformation) => {
+                        const transform = this.$parseDirectiveTransformation(transformation);
+                        const param = new Function('', `return ${transform.parameters};`);
+
+                        value = EMV.transformations[transform.name](value, param());
+                    });
+
+                    return value;
+                }
+
+                return data;
             }
             catch(err) {
                 return undefined;
@@ -981,12 +1059,7 @@
                 setter(this.$getContext(element), value);
             }
             catch(err) {
-                if(err.name === 'ReferenceError') {
-                    // If the variable does not exist in the context, add '$this' at start to avoid ReferenceError
-                    const expression = `$this.${parameters}`;
-
-                    setter(expression);
-                }
+                throw new EMVError(err.message);
             }
         }
 
@@ -998,6 +1071,15 @@
          */
         static directive(name, binder) {
             this.directives[name] = new EMVDirective(name, binder);
+        }
+
+        /**
+         * Create a filetr for EMV
+         * @param   {string}   name   The filter name
+         * @param   {Function} filter The filter method. This functions takes only the value to transform as parameter
+         */
+        static transform(name, filter) {
+            this.transformations[name] = filter;
         }
 
         /**
@@ -1789,6 +1871,71 @@
         }
     });
 
+
+    /**
+     * The EMV filters
+     */
+    EMV.transformations = {};
+
+    // Uppercase filter
+    EMV.transform('upper', (value) => {
+        return typeof value === 'string' && value.toUpperCase() || value;
+    });
+
+    // Lowercase filter
+    EMV.transform('lower', (value) => {
+        return typeof value === 'string' && value.toLowerCase() || value;
+    });
+
+    // Put the first character upper case, then the following lowercases
+    EMV.transform('ucfirst', (value) => {
+        if(typeof value !== 'string') {
+            return value;
+        }
+
+        return value.substr(0, 1).toUpperCase() + value.substr(1);
+    });
+
+
+    // Put each word with a capital first letter
+    EMV.transform('ucwords', (value) => {
+        if(typeof value !== 'string') {
+            return value;
+        }
+
+        return value.replace(/(^|\s)(.)/g, (match, sep, char) => {
+            return sep + char.toUpperCase();
+        });
+    });
+
+    // Write the object as JSON
+    EMV.transform('json', (value) => {
+        return JSON.stringify(value.valueOf());
+    });
+
+    // Format a number
+    EMV.transform('number', (value, parameters) => {
+        if(typeof value !== 'number') {
+            return value;
+        }
+
+        let result = value;
+
+        if(parameters.decimals !== undefined) {
+            result = result.toFixed(parameters.decimals);
+        }
+
+        if(parameters.thousandSep) {
+            result = result.replace(/\B(?=(?:\d{3})+(?!\d))/g, parameters.thousandSep);
+        }
+
+        if(parameters.decimalSep) {
+            result = result.replace('.', parameters.decimalSep);
+        }
+
+        return result;
+    });
+
     // Define the default EMV configuration
     EMV.config = {
         attributePrefix : 'e',
@@ -1797,7 +1944,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '2.0.0-2',
+        value : '3.0.0',
         writable : false
     });
 

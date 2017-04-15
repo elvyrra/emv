@@ -24,15 +24,19 @@
 
     <body>
         <ul>
-            <li e-each="list" e-text="label"></li>
+            <li e-each="list" title="${label :: lower}" e-attr="{'aria-control' : value}">
+                <span e-text="{$data : $this.value || 0, $transform: 'number(decimals : 2, thousandSep : \' \', decimalSep: \',\')'}"></span>
+            </li>
+
+            <span>${list[0].value :: number}</span>
         </ul>
 
         <script type="text/javascript" src="../lib/emv.js"></script>
         <script type="text/javascript">
             let emv = new EMV({
                 list : [
-                    {label : 'One'},
-                    {label : 'Two'}
+                    {label : 'One SDSDS', value : 12365.235},
+                    {label : 'Two sds'}
                 ]
             });
 

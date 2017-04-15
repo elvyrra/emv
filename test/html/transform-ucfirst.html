@@ -1,0 +1,11 @@
+<html>
+    <body>
+        <div id="text">${value :: ucfirst}</div>
+
+        <input type="text" id="attr" value="${value :: ucfirst}">
+
+        <input type="text" id="e-attr" e-value="{$data : value, $transform : 'ucfirst'}" />
+
+        <span id="wrong">${number :: ucfirst}</span>
+    </body>
+</html>

@@ -576,6 +576,113 @@ Each of these methods takes three arguments :
 * **model** : The model applied on the DOM (EMV instance)
 
 
+# Transformations (included in v3.0.0)
+Transformations are functions that can be applied in a directive to transform the value to display. A quick example,
+if you want to display a variable with uppercase, you can write something like that :
+```html
+<span e-text="{$data : myVar, $transform : 'upper'}"></span>
+```
+
+## Syntax
+Two syntaxes are availables to write a transformation in your view :
+
+### The directive syntax
+As in the example below, you can write :
+```html
+<span e-text="{$data : expression, $transform : 'upper'}"></span>
+```
+
+### The handlebars syntax
+Transformations can also be written in handlebars directive, with the following syntax :
+```html
+<span>${myvar :: upper}</span>
+```
+### Transformations with parameters
+Some transformations can take parameters, like the transformation 'number', which will be described later. To specify
+parameters in a transformation, the syntax is the following :
+```html
+<span>${myvar :: number(decimals : 2, thousandSep : ' ')}</span>
+```
+
+And in an attribute directive :
+```html
+<span e-text="{$data : expression, $transform : 'number(decimals : 2, thousandSep : \' \')'}"></span>
+```
+### Chained transformations :
+It is possible to apply several transformations on a directive value, chaining the like this :
+```html
+<span>${myvar :: json :: upper}</span>
+```
+
+And in an attribute directive :
+
+```html
+<span e-text="{$data : expression, $transform : ['json', 'upper']}"></span>
+```
+
+The transformations wil be applied in the order they are written
+
+## Predefined transformations
+### upper : Display the value upper case
+```html
+<span>${value :: upper}</span>
+```
+
+### lower : Display the value lower case
+```html
+<span>${value :: lower}</span>
+```
+
+### ucfirst : Display the first letter upper case
+```html
+<span>${value :: ucfirst}</span>
+```
+
+### ucwords : Display the first letter of each word
+```html
+<span>${value :: ucwords}</span>
+```
+
+### json : Display the value notation of the value
+```html
+<span>${value :: json}</span>
+```
+
+### number : Format a number
+```html
+<span>${value :: number(decimals : 2, thousandSep : ' ', decimalSep : ',')}</span>
+```
+This transformation accepts 3 parameters :
+* decimals : The number of decimals to display
+* thousandSep : The character separating the thousands
+* decimalSep : The character separating the integer and the decimal part of the number
+
+## Create your custom transformation
+EMV allows you to create your own transformations, using the method EMV.transform(name, handler). As for directives, it is a static
+method, it means that your transformation will be accessible in each EMV instance you create and apply on the DOM
+
+#### How to declare a transformation
+A transformation is declared with the method EMV.transform(name, handler);
+
+```javascript
+EMV.transform('my-transformation', function(value, parameters) {
+    ...
+});
+```
+
+The **handler** method contains two parameters :
+* value (mandatory) : The input value to transform
+* parameters (optionnal) : An object contaning the parameters the transformation can use
+
+It returns the result of the transformation.
+
+Example : The **upper** transformation
+```javascript
+EMV.transform('upper', (value) => {
+    return typeof value === 'string' && value.toUpperCase() || value;
+});
+```
+
 # EMV API
 
 ## EMV(param)
@@ -697,6 +804,12 @@ Note that this function can be applied on sub objects of an EMV instance.
     * name (String) : The directive name
     * handler (Object) : The directives data bind methods
 
+## (static) EMV.transform(name, handler)
+* description : Create a transformation on EMV
+* parameters :
+    * name (String) : The transformation name
+    * handler (Object) : The transformation parameters
+
 ## (static) EMV.config
 This object contains the following properties :
 
@@ -709,6 +822,7 @@ This object contains the following properties :
 Defines the EMV engin version
 
 
+
 # Known issues
 1. In directives, if use variable which name is a JavaScript reserved word, you need to prefix it by $this. For example, you cannot write :
  ```html
@@ -718,12 +832,3 @@ Defines the EMV engin version
  ```html
  <span e-if="$this.if"></span>
  ```
-
-2. If you configure EMV delimiters and htmlDelimiters, the patterns you choose for each of these variables cannot include the other one. For example,
- you cannot set :
- ```javascript
- EMV.config.delimiters = ['{{', '}}'];
- EMV.config.htmlDelimiter = ['{{{', '}}}'];
- ```
-
- It's a known issue we're trying to resolve.
