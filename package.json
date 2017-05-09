@@ -1,6 +1,6 @@
 {
   "name": "emv",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "EMV is a light and powerful two-way data binding system",
   "main": "./dist/emv.js",
   "directories": {
@@ -10,18 +10,18 @@
     "test": "rm -Rf coverage && istanbul --include-all-sources --root=./lib cover _mocha",
     "lint": "eslint ./lib/emv.js",
     "build-version": "mkdir -p dist &&  cp ./lib/emv.js ./dist && sed -i \"s/{{ version }}/${npm_package_version}/g\" ./dist/emv.js",
-    "build-es5": "babel ./dist/emv.js --out-file ./dist/emv-es5.js --presets=latest",
+    "build-es5": "babel ./dist/emv.js --out-file ./dist/emv-es5.js --presets=es2015-script",
     "uglify": "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv.min.js ./dist/emv.js",
     "uglify-es5": "./node_modules/.bin/uglifyjs --mangle --compress --comments --output ./dist/emv-es5.min.js ./dist/emv-es5.js",
     "build": "npm run lint && npm run build-version && npm run build-es5 && npm run uglify && npm run uglify-es5",
     "commit": "commit-wizard"
   },
-  "author": "Sebastien Lecocq",
+  "author": "Elvyrra S.A.S",
   "license": "ISC",
   "devDependencies": {
     "babel-cli": "^6.18.0",
     "babel-preset-env": "^1.1.8",
-    "babel-preset-latest": "^6.16.0",
+    "babel-preset-es2015-script": "^1.1.0",
     "chai": "^3.5.0",
     "chai-cheerio": "^1.0.0",
     "chai-jquery": "^2.0.0",

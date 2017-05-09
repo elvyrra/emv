@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.0.0
+ * emv.js 3.0.1
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -1944,7 +1944,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '3.0.0',
+        value : '3.0.1',
         writable : false
     });
 

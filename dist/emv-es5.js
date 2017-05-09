@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.0.0
+ * emv.js 3.0.1
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -29,7 +29,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     } else {
         global.EMV = factory();
     }
-})(undefined, function () {
+})(this, function () {
     /**
      * Generate a unique id
      * @returns {[type]} [description]
@@ -2046,7 +2046,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.0.0',
+        value: '3.0.1',
         writable: false
     });
 
