@@ -7,6 +7,16 @@ const chaiCheerio = require('chai-cheerio');
 const EMV = require('../lib/emv');
 const HTMLElement = require('html-element').Element;
 
+String.prototype.padStart = function(length, cars) {
+    var result = this;
+    while(result.length < length) {
+        const add = cars.substr(0, length - result.length);
+        result = add + result;
+    }
+
+    return result;
+};
+
 global.HTMLElement = HTMLElement;
 global.EMV = EMV;
 
@@ -28,6 +38,8 @@ describe('EMV', () => {
         require('./tests/directive-value');
         require('./tests/directive-input');
         require('./tests/directive-focus');
+        require('./tests/directive-click');
+        require('./tests/directive-on');
         require('./tests/directive-options');
         require('./tests/directive-text');
         require('./tests/directive-html');

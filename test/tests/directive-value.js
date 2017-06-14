@@ -15,7 +15,9 @@ describe('value directive', () => {
                 select : 1,
                 textarea : '',
                 other : '',
-                editable : ''
+                editable : '',
+                number : 12.5,
+                date : '1987-05-31'
             }
         });
 
@@ -41,6 +43,34 @@ describe('value directive', () => {
 
         expect($('#text-value').val()).to.equal(emv.text);
     });
+
+    it('bind number input', () => {
+        $('#number').val('21.5').trigger('change');
+
+        expect(emv.number).to.equal(21.5);
+    });
+
+    it('update number input', () => {
+        emv.number = 53.2;
+
+        expect($('#number').val()).to.equal(emv.number.toString());
+    });
+
+    it('bind date input', () => {
+        $('#date').val('2015-05-31').trigger('change');
+
+        expect(emv.date.constructor.name).to.equal('Date');
+        expect(emv.date.getFullYear()).to.equal(2015);
+        expect(emv.date.getMonth()).to.equal(4);
+        expect(emv.date.getDate()).to.equal(31);
+    });
+
+    it('update date input', () => {
+        emv.date = '2017-06-30';
+
+        expect($('#date').val()).to.equal(emv.date);
+    });
+
 
     it('bind checkbox input', () => {
         $('#checkbox-value').get(0).checked = true;

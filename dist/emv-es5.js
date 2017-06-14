@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.0.1
+ * emv.js 3.1.0
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -51,7 +51,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     function isPrimitive(variable) {
         var types = ['string', 'number', 'boolean', 'undefined', 'symbol'];
 
-        return types.indexOf(typeof variable === 'undefined' ? 'undefined' : _typeof(variable)) !== -1 || variable === null;
+        return types.indexOf(typeof variable === 'undefined' ? 'undefined' : _typeof(variable)) !== -1 || variable === null || variable instanceof Date;
     }
 
     /**
@@ -1410,6 +1410,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                 value = document.querySelector('input[name="' + element.name + '"]:checked').value;
                                 break;
 
+                            case 'number':
+                                value = parseFloat(element.value);
+                                break;
+
+                            case 'date':
+                                value = new Date(element.value);
+                                break;
+
                             default:
                                 value = element.value;
                                 break;
@@ -1458,6 +1466,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                 if (radio) {
                                     radio.checked = true;
                                 }
+                                break;
+                            }
+
+                        case 'date':
+                            {
+                                if (!(value instanceof Date)) {
+                                    value = new Date(value);
+                                }
+
+                                var year = value.getFullYear();
+                                var month = (value.getMonth() + 1).toString().padStart(2, '0');
+                                var date = value.getDate().toString().padStart(2, '0');
+
+                                element.value = year + '-' + month + '-' + date;
                                 break;
                             }
 
@@ -2046,7 +2068,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.0.1',
+        value: '3.1.0',
         writable: false
     });
 

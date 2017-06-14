@@ -1,6 +1,6 @@
 {
   "name": "emv",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "EMV is a light and powerful two-way data binding system",
   "main": "./dist/emv.js",
   "directories": {
