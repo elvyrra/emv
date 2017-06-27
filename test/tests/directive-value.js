@@ -53,7 +53,7 @@ describe('value directive', () => {
     it('update number input', () => {
         emv.number = 53.2;
 
-        expect($('#number').val()).to.equal(emv.number.toString());
+        expect($('#number').val()).to.equal('53.20');
     });
 
     it('bind date input', () => {

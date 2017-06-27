@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.1.0
+ * emv.js 3.1.1
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -41,6 +41,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
     }
+
+    /**
+     * Noop function
+     */
+    var noop = function noop() {};
 
     /**
      * Detect if a value is a primitive value
@@ -221,7 +226,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         if (_this3.$computed[key] && _this3.$computed[key].writer) {
                             try {
                                 _this3.$computed[key].writer(_this3, value, oldValue);
-                            } catch (err) {}
+                            } catch (err) {
+                                noop();
+                            }
                         }
                         if (oldValue !== value) {
                             _this3.$notifySubscribers(key, value, oldValue);
@@ -1159,7 +1166,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$parseDirectiveSetterParameters',
             value: function $parseDirectiveSetterParameters(parameters) {
-                return new Function('$context', '$value', '\n                with($context) {\n                    ' + parameters + ' = $value;\n                }\n            ');
+                var variable = parameters;
+                var match = parameters.match(/\$(?:data|set)\s*:\s*(.+?)\s*[,\}]/);
+
+                if (match) {
+                    variable = match[1];
+                }
+
+                return new Function('$context', '$value', '\n                with($context) {\n                    ' + variable + ' = $value;\n                }\n            ');
             }
 
             /**
@@ -1236,11 +1250,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                     // remove the node
                     if (baseElement.$parent.contains(element)) {
-                        // if(element.childNodes) {
-                        //     Array.from(element.childNodes).forEach((child) => {
-                        //         this.$clean(child);
-                        //     });
-                        // }
                         baseElement.$parent.removeChild(element);
                     }
                 }
@@ -1515,23 +1524,39 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         },
         update: function update(element, parameters, model) {
             var value = model.$getDirectiveValue(parameters, element);
+            var start = element.selectionStart;
+            var end = element.selectionEnd;
 
             element.value = value || '';
+
+            element.setSelectionRange(start, end);
         }
     });
 
     EMV.directive('focus', {
         bind: function bind(element, parameters, model) {
             element.addEventListener('focus', function () {
-                model.$setDirectiveValue(parameters, element, true);
+                try {
+                    model.$setDirectiveValue(parameters, element, true);
+                } catch (err) {
+                    noop();
+                }
             });
 
             element.addEventListener('blur', function () {
-                model.$setDirectiveValue(parameters, element, false);
+                try {
+                    model.$setDirectiveValue(parameters, element, false);
+                } catch (err) {
+                    noop();
+                }
             });
         },
         update: function update(element, parameters, model) {
             var value = model.$getDirectiveValue(parameters, element);
+
+            if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && '$get' in value) {
+                value = value.$get;
+            }
 
             if (value && element !== document.activeElement) {
                 element.focus();
@@ -2068,7 +2093,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.1.0',
+        value: '3.1.1',
         writable: false
     });
 

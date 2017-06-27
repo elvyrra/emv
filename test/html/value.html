@@ -21,7 +21,7 @@
 
         <div id="editable" contenteditable e-value="editable"></div>
 
-        <input type="number" id="number" e-value="number" />
+        <input type="number" id="number" e-value="{$data : number, $transform : 'number(decimals : 2)'}" />
 
         <input type="date" id="date" e-value="date" />
     </body>

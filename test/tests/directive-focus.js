@@ -8,9 +8,8 @@ describe('focus directive', () => {
 
     beforeEach(() => {
         emv = new EMV({
-            data : {
-                focus : false
-            }
+            focus1 : false,
+            focus2 : false
         });
 
         return utils.loadPage('focus.html')
@@ -23,23 +22,28 @@ describe('focus directive', () => {
     });
 
     it('bind input', () => {
-        $('input').get(0).focus();
+        $('#bind-update').get(0).focus();
 
-        expect(emv.focus).to.equal(true);
+        expect(emv.focus1).to.equal(true);
 
-        $('input').get(0).blur();
+        $('#bind-update').get(0).blur();
 
-        expect(emv.focus).to.equal(false);
+        expect(emv.focus1).to.equal(false);
+
+        $('#only-updating').get(0).focus();
+        expect(emv.focus2).to.equal(false);
     });
 
     it('update text input', () => {
-        emv.focus = true;
+        emv.focus1 = true;
+        expect($('#bind-update').is(':focus')).to.equal(true);
+        emv.focus1 = false;
+        expect($('#bind-update').is(':focus')).to.equal(false);
 
-        expect($('input').is(':focus')).to.equal(true);
-
-        emv.focus = false;
-
-        expect($('input').is(':focus')).to.equal(false);
+        emv.focus2 = true;
+        expect($('#only-updating').is(':focus')).to.equal(true);
+        emv.focus2 = false;
+        expect($('#only-updating').is(':focus')).to.equal(false);
     });
 
     afterEach('clean emv binding', () => {

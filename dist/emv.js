@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.1.0
+ * emv.js 3.1.1
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -33,6 +33,11 @@
 
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
     }
+
+    /**
+     * Noop function
+     */
+    const noop = function() {};
 
     /**
      * Detect if a value is a primitive value
@@ -204,7 +209,9 @@
                         try {
                             this.$computed[key].writer(this, value, oldValue);
                         }
-                        catch(err) {}
+                        catch(err) {
+                            noop();
+                        }
                     }
                     if(oldValue !== value) {
                         this.$notifySubscribers(key, value, oldValue);
@@ -1038,9 +1045,16 @@
          * @returns {Function}          The parsed function
          */
         $parseDirectiveSetterParameters(parameters) {
+            let variable = parameters;
+            const match = parameters.match(/\$(?:data|set)\s*:\s*(.+?)\s*[,\}]/);
+
+            if(match) {
+                variable = match[1];
+            }
+
             return new Function('$context', '$value', `
                 with($context) {
-                    ${parameters} = $value;
+                    ${variable} = $value;
                 }
             `);
         }
@@ -1130,11 +1144,6 @@
 
                 // remove the node
                 if(baseElement.$parent.contains(element)) {
-                    // if(element.childNodes) {
-                    //     Array.from(element.childNodes).forEach((child) => {
-                    //         this.$clean(child);
-                    //     });
-                    // }
                     baseElement.$parent.removeChild(element);
                 }
             }
@@ -1395,24 +1404,42 @@
             });
         },
         update : function(element, parameters, model) {
-            let value = model.$getDirectiveValue(parameters, element);
+            const value = model.$getDirectiveValue(parameters, element);
+            const start = element.selectionStart;
+            const end = element.selectionEnd;
 
             element.value = value || '';
+
+            element.setSelectionRange(start, end);
         }
     });
 
     EMV.directive('focus', {
         bind : function(element, parameters, model) {
             element.addEventListener('focus', function() {
-                model.$setDirectiveValue(parameters, element, true);
+                try {
+                    model.$setDirectiveValue(parameters, element, true);
+                }
+                catch(err) {
+                    noop();
+                }
             });
 
             element.addEventListener('blur', function() {
-                model.$setDirectiveValue(parameters, element, false);
+                try {
+                    model.$setDirectiveValue(parameters, element, false);
+                }
+                catch(err) {
+                    noop();
+                }
             });
         },
         update : function(element, parameters, model) {
             let value = model.$getDirectiveValue(parameters, element);
+
+            if(typeof value === 'object' && '$get' in value) {
+                value = value.$get;
+            }
 
             if(value && element !== document.activeElement) {
                 element.focus();
@@ -1967,7 +1994,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '3.1.0',
+        value : '3.1.1',
         writable : false
     });
 

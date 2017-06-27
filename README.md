@@ -1,4 +1,4 @@
-# EMV
+# EMV v3.1.1
 EMV is a JavaScript data-bind system. You could say "Again another one ?". But the differences with other systems that exsists are :
 
 * EMV is very light, and powerful. Comparely to other systems, when a variable is modified, only concerned nodes are woken and not all the view.
@@ -268,6 +268,19 @@ The directive **e-focus** can be applied on the inputs, selectboxes, and textare
 ```html
 <input type="text" e-focus="focus" />
 ```
+
+In some cases, it is possible that the getter and setter are different, it is possible to write something like that :
+
+```html
+<input type="text" e-focus="{$get : variable === 'value', $set : focus}" />
+```
+
+Note : If you want to apply a function on the focus event, you will have to use the directive e-on :
+```html
+<input type="text" e-focus="variable === 'value'" e-on="{focus : method}" />
+```
+
+
 
 ### e-options : Update the options on a select tag
 The directive **e-option** is used to update the options of a `select` tag. It can be applied only on a `select` tag.

@@ -1,5 +1,7 @@
 <html>
     <body>
-        <input type="text" e-focus="focus" />
+        <input id="bind-update" type="text" e-focus="focus1" />
+
+        <input id="only-updating" type="text" e-focus="{$get : focus2 === true}" />
     </body>
 </html>

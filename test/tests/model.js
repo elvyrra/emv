@@ -184,8 +184,10 @@ describe('EMV model-model', () => {
                 arr : [
                     {type : 1},
                     2,
-                    3
-                ]
+                    3,
+                    undefined
+                ],
+                notDefined : undefined
             },
             computed : {
                 upper : function() {
@@ -202,9 +204,11 @@ describe('EMV model-model', () => {
             arr : [
                 {type : 1},
                 2,
-                3
+                3,
+                undefined
             ],
-            upper : 'HELLO'
+            upper : 'HELLO',
+            notDefined : undefined
         };
 
         expect(emv.valueOf()).to.eql(expected);
