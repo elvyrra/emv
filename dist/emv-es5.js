@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.1.1
+ * emv.js 3.1.2
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -790,7 +790,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                 try {
                                     var transform = _this12.$parseDirectiveTransformation(transformation);
 
-                                    result = 'EMV.transformations.' + transform.name + '(' + result + ', ' + transform.parameters + ')';
+                                    result = '$root.constructor.transformations.' + transform.name + '(' + result + ', ' + transform.parameters + ')';
                                 } catch (err) {
                                     throw new EMVError('Error while parsing directive transformation : ' + value);
                                 }
@@ -2093,7 +2093,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.1.1',
+        value: '3.1.2',
         writable: false
     });
 
