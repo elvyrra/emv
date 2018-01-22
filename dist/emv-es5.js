@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.1.2
+ * emv.js 3.1.3
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -1424,7 +1424,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                 break;
 
                             case 'date':
-                                value = new Date(element.value);
+                                value = element.value ? new Date(element.value) : null;
                                 break;
 
                             default:
@@ -2093,7 +2093,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.1.2',
+        value: '3.1.3',
         writable: false
     });
 

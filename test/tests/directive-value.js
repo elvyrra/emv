@@ -63,6 +63,9 @@ describe('value directive', () => {
         expect(emv.date.getFullYear()).to.equal(2015);
         expect(emv.date.getMonth()).to.equal(4);
         expect(emv.date.getDate()).to.equal(31);
+
+        $('#date').val('').trigger('change');
+        expect(emv.date).to.equal(null);
     });
 
     it('update date input', () => {

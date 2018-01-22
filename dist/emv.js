@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.1.2
+ * emv.js 3.1.3
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -1304,7 +1304,7 @@
                                 break;
 
                             case 'date' :
-                                value = new Date(element.value);
+                                value = element.value ? new Date(element.value) : null;
                                 break;
 
                             default :
@@ -1363,10 +1363,8 @@
                             }
 
                             const year = value.getFullYear();
-                            const month = (value.getMonth() + 1).toString()
-                                                                .padStart(2, '0');
-                            const date = value.getDate().toString()
-                                                        .padStart(2, '0');
+                            const month = (value.getMonth() + 1).toString().padStart(2, '0');
+                            const date = value.getDate().toString().padStart(2, '0');
 
                             element.value = `${year}-${month}-${date}`;
                             break;
@@ -1994,7 +1992,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '3.1.2',
+        value : '3.1.3',
         writable : false
     });
 
