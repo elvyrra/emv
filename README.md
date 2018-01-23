@@ -1,4 +1,4 @@
-# EMV v3.1.1
+# EMV v3.2.0
 EMV is a JavaScript data-bind system. You could say "Again another one ?". But the differences with other systems that exsists are :
 
 * EMV is very light, and powerful. Comparely to other systems, when a variable is modified, only concerned nodes are woken and not all the view.
