@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.1.3
+ * emv.js 3.2.0
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -35,9 +35,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
      * @returns {[type]} [description]
      */
     function guid() {
-        var s4 = function s4() {
+        /**
+         * Build a random 4 characters string
+         * @returns {string} The generated random string
+         */
+        function s4() {
             return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-        };
+        }
 
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
     }
@@ -45,7 +49,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
     /**
      * Noop function
      */
-    var noop = function noop() {};
+    function noop() {}
 
     /**
      * Detect if a value is a primitive value
@@ -65,7 +69,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
      * @returns {string}     The escaped string
      */
     function escapeRegExp(str) {
-        return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+        return str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
     }
 
     /**
@@ -109,16 +113,43 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             _classCallCheck(this, EMVObservable);
 
-            this.$computed = {};
-            this.$observed = new Set([]);
-            this.$callers = {};
-            this.$watchers = {};
-            this.$root = $root || this;
-            this.$parent = $parent;
-            this.$this = this;
-            this.$directives = {};
-            this.$object = initValue;
-            this.$additionalProperties = new Set([]);
+            Object.defineProperties(this, {
+                $computed: {
+                    value: {}
+                },
+                $observed: {
+                    value: new Set([])
+                },
+                $callers: {
+                    value: {}
+                },
+                $watchers: {
+                    value: {}
+                },
+                $root: {
+                    value: $root || this,
+                    writable: true
+                },
+                $parent: {
+                    value: $parent,
+                    writable: true
+                },
+                $this: {
+                    value: this,
+                    writable: true
+                },
+                $directives: {
+                    value: {}
+                },
+                $object: {
+                    value: initValue,
+                    writable: true
+                },
+                $additionalProperties: {
+                    value: new Set([]),
+                    writable: true
+                }
+            });
 
             Object.keys(initValue).forEach(function (key) {
                 _this2.$observe(key, initValue[key], upperKey);
@@ -240,7 +271,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                         return true;
                     },
-
                     enumerable: true,
                     configurable: true
                 };
@@ -271,23 +301,21 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             /**
              * Notify that a modification has been performed on a property to all of it subscribers
-             * @param  {string} key     The property name that changed
-             * @param  {mixed} value    The new value of the property
-             * @param  {mixed} oldValue The previous value of the property
+             * @param  {string} key      The property name that changed
+             * @param  {mixed}  val      The new value of the property
+             * @param  {mixed}  oldValue The previous value of the property
              */
 
         }, {
             key: '$notifySubscribers',
-            value: function $notifySubscribers(key, value, oldValue) {
+            value: function $notifySubscribers(key, val, oldValue) {
                 var _this5 = this;
 
                 if (!key) {
                     return;
                 }
 
-                if (value === undefined) {
-                    value = this[key];
-                }
+                var value = val === undefined ? this[key] : val;
 
                 if (this.$callers[key]) {
                     Object.keys(this.$callers[key]).forEach(function (uid) {
@@ -501,19 +529,15 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         this.uid = guid();
         this.object = object;
 
-        if (typeof handler === 'function') {
-            handler = {
-                read: handler
-            };
-        }
+        var handlers = typeof handler === 'function' ? { read: handler } : handler;
 
-        if (handler.write) {
+        if (handlers.write) {
             this.writer = function (target, value, oldValue) {
-                handler.write.call(target, value, oldValue);
+                handlers.write.call(target, value, oldValue);
             };
         }
 
-        if (handler.read) {
+        if (handlers.read) {
             this.reader = function (target) {
                 var previousComputed = object.$root.$executingComputed;
 
@@ -522,7 +546,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 var value = void 0;
 
                 try {
-                    value = handler.read.call(target);
+                    value = handlers.read.call(target);
                 } catch (err) {
                     value = undefined;
                 }
@@ -625,21 +649,29 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             var options = param || {};
 
-            // Manage the templates
             var _this10 = _possibleConstructorReturn(this, (EMV.__proto__ || Object.getPrototypeOf(EMV)).call(this, options.data || options, $root));
 
-            _this10.$templates = {};
-
-            // Manage the executing computed
-            _this10.$executingComputed = null;
-
-            // Manage the executing directive
-            _this10.$executingDirective = null;
-
-            // Manage if a context is creating
-            _this10.$creatingContext = false;
-
-            _this10.$directives = {};
+            Object.defineProperties(_this10, {
+                // Manage the templates
+                $templates: {
+                    value: {}
+                },
+                // Manage the executing computed
+                $executingComputed: {
+                    writable: true,
+                    value: null
+                },
+                // Manage the executing directive
+                $executingDirective: {
+                    writable: true,
+                    value: null
+                },
+                // Manage if a context is creating
+                $creatingContext: {
+                    writable: true,
+                    value: false
+                }
+            });
 
             if (options.computed) {
                 Object.keys(options.computed).forEach(function (key) {
@@ -730,7 +762,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             key: '$registerTemplate',
             value: function $registerTemplate(name, html) {
                 // Remove comment from template to be compatible with jquery
-                var parsedHtml = html.replace(/<!\-\-(.*?)\-\->/g, '');
+                var parsedHtml = html.replace(/<!--(.*?)-->/g, '');
 
                 this.$templates[name] = parsedHtml;
             }
@@ -1011,7 +1043,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                     }
 
                     context.$additionalProperties.add(key);
-                    context[key] = (element.parentNode || element.$parent).$context[key];
+                    Object.defineProperty(context, key, {
+                        value: (element.parentNode || element.$parent).$context[key],
+                        writable: true
+                    });
                 });
 
                 element.$additionalContextProperties = new Set(additionalProperties);
@@ -1019,7 +1054,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 if (otherParams) {
                     Object.keys(otherParams).forEach(function (key) {
                         context.$additionalProperties.add(key);
-                        context[key] = otherParams[key];
+
+                        Object.defineProperty(context, key, {
+                            value: otherParams[key],
+                            writable: true
+                        });
+
                         element.$additionalContextProperties.add(key);
                     });
                 }
@@ -1167,7 +1207,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             key: '$parseDirectiveSetterParameters',
             value: function $parseDirectiveSetterParameters(parameters) {
                 var variable = parameters;
-                var match = parameters.match(/\$(?:data|set)\s*:\s*(.+?)\s*[,\}]/);
+                var match = parameters.match(/\$(?:data|set)\s*:\s*(.+?)\s*[,}]/);
 
                 if (match) {
                     variable = match[1];
@@ -1601,8 +1641,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             element.innerHTML = '';
 
-            // Insert the options tags
-            var insertOptionTag = function insertOptionTag(value, label) {
+            /**
+             * Insert the options tags
+             * @param   {string} value The option value
+             * @param   {string} label The option label
+             */
+            function insertOptionTag(value, label) {
                 var optionTag = document.createElement('option');
 
                 optionTag.value = value;
@@ -1612,7 +1656,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 }
 
                 element.appendChild(optionTag);
-            };
+            }
 
             Object.keys(options).forEach(function (value) {
                 var label = options[value];
@@ -1725,7 +1769,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
      * @param {DOMNode} element The element to initialize
      * @param {EMV}     model   The model
      */
-    var initElementProperties = function initElementProperties(element, model) {
+    function initElementProperties(element, model) {
         element.$before = [];
 
         if (element.previousElementSibling) {
@@ -1744,7 +1788,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         element.$templateName = templateName;
 
         model.$registerTemplate(templateName, template);
-    };
+    }
 
     EMV.directive('each', {
         init: function init(element, parameters, model) {
@@ -2093,7 +2137,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.1.3',
+        value: '3.2.0',
         writable: false
     });
 
@@ -2113,29 +2157,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }
 
         return originalIsArray(variable);
-    };
-
-    // Overwrite Object.keys to return only real keys of an EMVObervable
-    var originalObjectKeys = Object.keys;
-
-    Object.keys = function (variable) {
-        if (variable instanceof EMVObservableArray) {
-            var keys = [];
-
-            variable.forEach(function (value, index) {
-                keys.push(index.toString());
-            });
-
-            return keys;
-        } else if (variable instanceof EMVObservable) {
-            var _keys = originalObjectKeys(variable);
-
-            return _keys.filter(function (key) {
-                return key.substr(0, 1) !== '$' && !(variable.$additionalProperties && variable.$additionalProperties.has(key));
-            });
-        }
-
-        return originalObjectKeys(variable);
     };
 
     return EMV;

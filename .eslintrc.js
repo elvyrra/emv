@@ -151,7 +151,7 @@ module.exports = {
         'id-match'                      : 0,
         'indent'                        : [2, 4, {SwitchCase : 1}],
         'jsx-quotes'                    : 0,
-        'key-spacing'                   : [2, {'beforeColon' : true, 'afterColon' : true}],
+        'key-spacing'                   : [2, {'align' : 'colon', 'beforeColon' : true, 'afterColon' : true}],
         'keyword-spacing'               : 0,
         'linebreak-style'               : 0,
         'lines-around-comment'          : 0,
@@ -236,7 +236,8 @@ module.exports = {
         'require-yield'          : 0,
         'template-curly-spacing' : 0,
         'yield-star-spacing'     : 0,
-        'no-underscore-dangle'   : 0
+        'no-underscore-dangle'   : 0,
+        'no-use-before-define'   : 0
 
         // Plugin JSDoc
         // 'jsdoc/check-param-names'                     : 0,

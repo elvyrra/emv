@@ -2,7 +2,7 @@
 /* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.1.3
+ * emv.js 3.2.0
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -25,11 +25,15 @@
      * @returns {[type]} [description]
      */
     function guid() {
-        const s4 = () => {
+        /**
+         * Build a random 4 characters string
+         * @returns {string} The generated random string
+         */
+        function s4() {
             return Math.floor((1 + Math.random()) * 0x10000)
                 .toString(16)
                 .substring(1);
-        };
+        }
 
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
     }
@@ -37,7 +41,7 @@
     /**
      * Noop function
      */
-    const noop = function() {};
+    function noop() {}
 
     /**
      * Detect if a value is a primitive value
@@ -63,7 +67,7 @@
      * @returns {string}     The escaped string
      */
     function escapeRegExp(str) {
-        return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+        return str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
     }
 
 
@@ -95,16 +99,43 @@
          * @param  {string} upperKey        The key to retrieve this object from the parent object
          */
         constructor(initValue, $root, $parent, upperKey) {
-            this.$computed = {};
-            this.$observed = new Set([]);
-            this.$callers = {};
-            this.$watchers = {};
-            this.$root = $root || this;
-            this.$parent = $parent;
-            this.$this = this;
-            this.$directives = {};
-            this.$object = initValue;
-            this.$additionalProperties = new Set([]);
+            Object.defineProperties(this, {
+                $computed : {
+                    value : {}
+                },
+                $observed : {
+                    value : new Set([])
+                },
+                $callers : {
+                    value : {}
+                },
+                $watchers : {
+                    value : {}
+                },
+                $root : {
+                    value    : $root || this,
+                    writable : true
+                },
+                $parent : {
+                    value    : $parent,
+                    writable : true
+                },
+                $this : {
+                    value    : this,
+                    writable : true
+                },
+                $directives : {
+                    value : {}
+                },
+                $object : {
+                    value    : initValue,
+                    writable : true
+                },
+                $additionalProperties : {
+                    value    : new Set([]),
+                    writable : true
+                }
+            });
 
             Object.keys(initValue).forEach((key) => {
                 this.$observe(key, initValue[key], upperKey);
@@ -148,9 +179,9 @@
                                     if(callerObject.$computed[computedName] === computed) {
                                         this.$callers[key][computed.uid] = {
                                             property : computedName,
-                                            reader : computed.reader,
-                                            writer : computed.writer,
-                                            object : computed.object
+                                            reader   : computed.reader,
+                                            writer   : computed.writer,
+                                            object   : computed.object
                                         };
 
                                         return false;
@@ -223,8 +254,7 @@
 
                     return true;
                 },
-
-                enumerable : true,
+                enumerable   : true,
                 configurable : true
             };
 
@@ -250,18 +280,16 @@
 
         /**
          * Notify that a modification has been performed on a property to all of it subscribers
-         * @param  {string} key     The property name that changed
-         * @param  {mixed} value    The new value of the property
-         * @param  {mixed} oldValue The previous value of the property
+         * @param  {string} key      The property name that changed
+         * @param  {mixed}  val      The new value of the property
+         * @param  {mixed}  oldValue The previous value of the property
          */
-        $notifySubscribers(key, value, oldValue) {
+        $notifySubscribers(key, val, oldValue) {
             if(!key) {
                 return;
             }
 
-            if(value === undefined) {
-                value = this[key];
-            }
+            const value = val === undefined ? this[key] : val;
 
             if(this.$callers[key]) {
                 Object.keys(this.$callers[key]).forEach((uid) => {
@@ -442,19 +470,15 @@
             this.uid = guid();
             this.object = object;
 
-            if(typeof handler === 'function') {
-                handler = {
-                    read : handler
-                };
-            }
+            const handlers = typeof handler === 'function' ? {read : handler} : handler;
 
-            if(handler.write) {
+            if(handlers.write) {
                 this.writer = function(target, value, oldValue) {
-                    handler.write.call(target, value, oldValue);
+                    handlers.write.call(target, value, oldValue);
                 };
             }
 
-            if(handler.read) {
+            if(handlers.read) {
                 this.reader = function(target) {
                     const previousComputed = object.$root.$executingComputed;
 
@@ -463,7 +487,7 @@
                     let value;
 
                     try {
-                        value = handler.read.call(target);
+                        value = handlers.read.call(target);
                     }
                     catch(err) {
                         value = undefined;
@@ -501,12 +525,12 @@
                         const previousDirective = model.$root.$executingDirective;
 
                         model.$root.$executingDirective = {
-                            element : element,
+                            element    : element,
                             parameters : parameters,
-                            model : model,
-                            handler : self,
-                            uid : this.getUid(element),
-                            name : name
+                            model      : model,
+                            handler    : self,
+                            uid        : this.getUid(element),
+                            name       : name
                         };
 
                         const result = binder[method](element, parameters, model);
@@ -553,19 +577,27 @@
 
             super(options.data || options, $root);
 
-            // Manage the templates
-            this.$templates = {};
-
-            // Manage the executing computed
-            this.$executingComputed = null;
-
-            // Manage the executing directive
-            this.$executingDirective = null;
-
-            // Manage if a context is creating
-            this.$creatingContext = false;
-
-            this.$directives = {};
+            Object.defineProperties(this, {
+                // Manage the templates
+                $templates : {
+                    value : {}
+                },
+                // Manage the executing computed
+                $executingComputed : {
+                    writable : true,
+                    value    : null
+                },
+                // Manage the executing directive
+                $executingDirective : {
+                    writable : true,
+                    value    : null
+                },
+                // Manage if a context is creating
+                $creatingContext : {
+                    writable : true,
+                    value    : false
+                }
+            });
 
             if(options.computed) {
                 Object.keys(options.computed).forEach((key) => {
@@ -646,7 +678,7 @@
          */
         $registerTemplate(name, html) {
             // Remove comment from template to be compatible with jquery
-            const parsedHtml = html.replace(/<!\-\-(.*?)\-\->/g, '');
+            const parsedHtml = html.replace(/<!--(.*?)-->/g, '');
 
             this.$templates[name] = parsedHtml;
         }
@@ -665,7 +697,7 @@
                 const param = `{${match[3] || ''}}`;
 
                 return {
-                    name : name,
+                    name       : name,
                     parameters : param
                 };
             }
@@ -814,11 +846,11 @@
             const uid = directive.getUid(element);
 
             this.$directives[uid] = {
-                name : name,
-                handler : directive,
+                name       : name,
+                handler    : directive,
                 parameters : parameters,
-                model : this,
-                element : element
+                model      : this,
+                element    : element
             };
 
             element.$directives[name] = uid;
@@ -895,9 +927,9 @@
             }
             else {
                 context = {
-                    $this : object,
-                    $parent : object.$parent,
-                    $root : this,
+                    $this                 : object,
+                    $parent               : object.$parent,
+                    $root                 : this,
                     $additionalProperties : new Set([])
                 };
             }
@@ -910,7 +942,10 @@
                 }
 
                 context.$additionalProperties.add(key);
-                context[key] = (element.parentNode || element.$parent).$context[key];
+                Object.defineProperty(context, key, {
+                    value    : (element.parentNode || element.$parent).$context[key],
+                    writable : true
+                });
             });
 
             element.$additionalContextProperties = new Set(additionalProperties);
@@ -918,7 +953,12 @@
             if(otherParams) {
                 Object.keys(otherParams).forEach((key) => {
                     context.$additionalProperties.add(key);
-                    context[key] = otherParams[key];
+
+                    Object.defineProperty(context, key, {
+                        value    : otherParams[key],
+                        writable : true
+                    });
+
                     element.$additionalContextProperties.add(key);
                 });
             }
@@ -1046,7 +1086,7 @@
          */
         $parseDirectiveSetterParameters(parameters) {
             let variable = parameters;
-            const match = parameters.match(/\$(?:data|set)\s*:\s*(.+?)\s*[,\}]/);
+            const match = parameters.match(/\$(?:data|set)\s*:\s*(.+?)\s*[,}]/);
 
             if(match) {
                 variable = match[1];
@@ -1483,8 +1523,12 @@
 
             element.innerHTML = '';
 
-            // Insert the options tags
-            let insertOptionTag = function(value, label) {
+            /**
+             * Insert the options tags
+             * @param   {string} value The option value
+             * @param   {string} label The option label
+             */
+            function insertOptionTag(value, label) {
                 let optionTag = document.createElement('option');
 
                 optionTag.value = value;
@@ -1494,7 +1538,7 @@
                 }
 
                 element.appendChild(optionTag);
-            };
+            }
 
             Object.keys(options).forEach(function(value) {
                 let label = options[value];
@@ -1613,7 +1657,7 @@
      * @param {DOMNode} element The element to initialize
      * @param {EMV}     model   The model
      */
-    const initElementProperties = function(element, model) {
+    function initElementProperties(element, model) {
         element.$before = [];
 
         if(element.previousElementSibling) {
@@ -1632,7 +1676,7 @@
         element.$templateName = templateName;
 
         model.$registerTemplate(templateName, template);
-    };
+    }
 
 
     EMV.directive('each', {
@@ -1712,9 +1756,9 @@
                 });
 
                 const before = element.$clones.slice()
-                                        .reverse()
-                                        .concat(meta)
-                                        .concat(element.$before);
+                .reverse()
+                .concat(meta)
+                .concat(element.$before);
 
                 if(itemPreviousIndex !== -1) {
                     // The item already exists
@@ -1987,12 +2031,12 @@
     // Define the default EMV configuration
     EMV.config = {
         attributePrefix : 'e',
-        delimiters : ['${', '}']
+        delimiters      : ['${', '}']
     };
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value : '3.1.3',
+        value    : '3.2.0',
         writable : false
     });
 
@@ -2012,31 +2056,6 @@
         }
 
         return originalIsArray(variable);
-    };
-
-    // Overwrite Object.keys to return only real keys of an EMVObervable
-    const originalObjectKeys = Object.keys;
-
-    Object.keys = function(variable) {
-        if(variable instanceof EMVObservableArray) {
-            const keys = [];
-
-            variable.forEach((value, index) => {
-                keys.push(index.toString());
-            });
-
-            return keys;
-        }
-        else if(variable instanceof EMVObservable) {
-            const keys = originalObjectKeys(variable);
-
-            return keys.filter((key) => {
-                return key.substr(0, 1) !== '$' &&
-                    !(variable.$additionalProperties && variable.$additionalProperties.has(key));
-            });
-        }
-
-        return originalObjectKeys(variable);
     };
 
     return EMV;
