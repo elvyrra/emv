@@ -1,8 +1,7 @@
 /*global define, module, exports*/
-/* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.2.0
+ * emv.js 3.2.1
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -43,13 +42,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
         }
 
-        return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+        return '' + s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
     }
-
-    /**
-     * Noop function
-     */
-    function noop() {}
 
     /**
      * Detect if a value is a primitive value
@@ -257,10 +251,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         if (_this3.$computed[key] && _this3.$computed[key].writer) {
                             try {
                                 _this3.$computed[key].writer(_this3, value, oldValue);
-                            } catch (err) {
-                                noop();
-                            }
+                            } catch (err) {}
                         }
+
                         if (oldValue !== value) {
                             _this3.$notifySubscribers(key, value, oldValue);
 
@@ -398,11 +391,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                     return;
                 }
 
-                var propSteps = prop.split('.'),
-                    observable = void 0,
-                    finalProp = propSteps.pop();
-
-                observable = this.$this;
+                var propSteps = prop.split('.');
+                var finalProp = propSteps.pop();
+                var observable = this.$this;
 
                 propSteps.forEach(function (step) {
                     observable = observable[step];
@@ -431,9 +422,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$unwatch',
             value: function $unwatch(prop, handler) {
-                var propSteps = prop.split('.'),
-                    observable = void 0,
-                    finalProp = propSteps.pop();
+                var propSteps = prop.split('.');
+                var finalProp = propSteps.pop();
+                var observable = this.$this;
 
                 observable = this.$this;
 
@@ -522,9 +513,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
      * @param {Object} object       The object this computed is affected on
      */
     function EMVComputed(handler, object) {
-        _classCallCheck(this, EMVComputed);
+        var _this9 = this;
 
-        var self = this;
+        _classCallCheck(this, EMVComputed);
 
         this.uid = guid();
         this.object = object;
@@ -541,7 +532,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             this.reader = function (target) {
                 var previousComputed = object.$root.$executingComputed;
 
-                object.$root.$executingComputed = self;
+                object.$root.$executingComputed = _this9;
 
                 var value = void 0;
 
@@ -574,7 +565,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
          *                                      which this directive depends on, is modified
          */
         function EMVDirective(name, binder) {
-            var _this9 = this;
+            var _this10 = this;
 
             _classCallCheck(this, EMVDirective);
 
@@ -584,7 +575,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             var computeDirectiveMethod = function computeDirectiveMethod(method) {
                 if (binder[method]) {
-                    _this9[method] = function (element, parameters, model) {
+                    _this10[method] = function (element, parameters, model) {
                         var previousDirective = model.$root.$executingDirective;
 
                         model.$root.$executingDirective = {
@@ -592,7 +583,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                             parameters: parameters,
                             model: model,
                             handler: self,
-                            uid: _this9.getUid(element),
+                            uid: _this10.getUid(element),
                             name: name
                         };
 
@@ -649,9 +640,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             var options = param || {};
 
-            var _this10 = _possibleConstructorReturn(this, (EMV.__proto__ || Object.getPrototypeOf(EMV)).call(this, options.data || options, $root));
+            var _this11 = _possibleConstructorReturn(this, (EMV.__proto__ || Object.getPrototypeOf(EMV)).call(this, options.data || options, $root));
 
-            Object.defineProperties(_this10, {
+            Object.defineProperties(_this11, {
                 // Manage the templates
                 $templates: {
                     value: {}
@@ -675,20 +666,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             if (options.computed) {
                 Object.keys(options.computed).forEach(function (key) {
-                    _this10.$computed[key] = new EMVComputed(options.computed[key], _this10);
+                    _this11.$computed[key] = new EMVComputed(options.computed[key], _this11);
 
-                    _this10.$observe(key);
+                    _this11.$observe(key);
                 });
             }
 
-            Object.keys(_this10.$computed).forEach(function (key) {
-                if (_this10.$computed[key].reader) {
-                    _this10[key] = _this10.$computed[key].reader(_this10);
+            Object.keys(_this11.$computed).forEach(function (key) {
+                if (_this11.$computed[key].reader) {
+                    _this11[key] = _this11.$computed[key].reader(_this11);
                 } else {
-                    _this10[key] = undefined;
+                    _this11[key] = undefined;
                 }
             });
-            return _this10;
+            return _this11;
         }
 
         /**
@@ -722,7 +713,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$clean',
             value: function $clean(element, excludes) {
-                var _this11 = this;
+                var _this12 = this;
 
                 var elem = element || this.$rootElement;
 
@@ -735,7 +726,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         if (!excludes || excludes.indexOf(directive) === -1) {
                             var uid = elem.$directives[directive];
 
-                            delete _this11.$directives[uid];
+                            delete _this12.$directives[uid];
                             delete elem.$directives[directive];
                         }
                     });
@@ -743,7 +734,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                 if (elem.children) {
                     Array.from(elem.children).forEach(function (child) {
-                        _this11.$clean(child);
+                        _this12.$clean(child);
                     });
                 }
 
@@ -801,7 +792,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$parseHandlebardDirective',
             value: function $parseHandlebardDirective(element, value) {
-                var _this12 = this;
+                var _this13 = this;
 
                 var safeStringRegex = new RegExp(escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]), 'g');
 
@@ -820,7 +811,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         if (steps.length > 1) {
                             steps.slice(1).forEach(function (transformation) {
                                 try {
-                                    var transform = _this12.$parseDirectiveTransformation(transformation);
+                                    var transform = _this13.$parseDirectiveTransformation(transformation);
 
                                     result = '$root.constructor.transformations.' + transform.name + '(' + result + ', ' + transform.parameters + ')';
                                 } catch (err) {
@@ -847,7 +838,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$parse',
             value: function $parse(element, excludes) {
-                var _this13 = this;
+                var _this14 = this;
 
                 if (element.$directives) {
                     return;
@@ -874,11 +865,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                 var _parameters = element.getAttribute(attribute);
                                 var directive = EMV.directives[name];
 
-                                _this13.$getContext(element);
-                                _this13.$setElementDirective(element, name, _parameters);
+                                _this14.$getContext(element);
+                                _this14.$setElementDirective(element, name, _parameters);
 
                                 if (directive.init) {
-                                    directive.init.call(_this13, element, _parameters, _this13);
+                                    directive.init.call(_this14, element, _parameters, _this14);
                                 }
                             }
                         }
@@ -889,11 +880,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         var attributeName = attribute.name;
                         var value = attribute.textContent;
 
-                        var attrValue = _this13.$parseHandlebardDirective(element, value);
+                        var attrValue = _this14.$parseHandlebardDirective(element, value);
 
                         if (attrValue !== null) {
-                            var attrDirective = _this13.$directives[element.$directives && element.$directives.attr];
-
+                            var attrDirective = _this14.$directives[element.$directives && element.$directives.attr];
                             var _parameters2 = attrDirective && attrDirective.parameters || '';
 
                             if (_parameters2) {
@@ -904,14 +894,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                             _parameters2 = '{' + _parameters2 + '}';
 
-                            _this13.$setElementDirective(element, 'attr', _parameters2);
+                            _this14.$setElementDirective(element, 'attr', _parameters2);
                         }
                     });
                 }
 
                 if (element.childNodes) {
                     Array.from(element.childNodes).forEach(function (child) {
-                        _this13.$parse(child);
+                        _this14.$parse(child);
                     });
                 }
             }
@@ -957,7 +947,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$render',
             value: function $render(element, excludes) {
-                var _this14 = this;
+                var _this15 = this;
 
                 element.$stopRenderingPropagation = false;
 
@@ -966,7 +956,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                     Object.keys(element.$directives).forEach(function (name) {
                         if ((!excludes || excludes.indexOf(name) === -1) && !element.$stopRenderingPropagation) {
                             var uid = element.$directives[name];
-                            var directive = this.$directives[uid];
+                            var directive = _this15.$directives[uid];
 
                             if (!directive) {
                                 return;
@@ -976,13 +966,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                             var parameters = directive.parameters;
 
                             if (handler.bind) {
-                                handler.bind.call(this, element, parameters, this);
+                                handler.bind.call(_this15, element, parameters, _this15);
                             }
+
                             if (handler.update) {
-                                handler.update.call(this, element, parameters, this);
+                                handler.update.call(_this15, element, parameters, _this15);
                             }
                         }
-                    }.bind(this));
+                    });
                 }
 
                 if (!document.documentElement.contains(element)) {
@@ -991,7 +982,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                 if (!element.$stopRenderingPropagation && element.childNodes) {
                     Array.from(element.childNodes).forEach(function (child) {
-                        _this14.$render(child);
+                        _this15.$render(child);
                     });
                 }
             }
@@ -1077,13 +1068,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$removeContext',
             value: function $removeContext(element) {
-                var _this15 = this;
+                var _this16 = this;
 
                 delete element.$context;
 
                 if (element.children) {
                     Array.from(element.children).forEach(function (child) {
-                        _this15.$removeContext(child);
+                        _this16.$removeContext(child);
                     });
                 }
             }
@@ -1165,7 +1156,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         }, {
             key: '$getDirectiveValue',
             value: function $getDirectiveValue(parameters, element, context) {
-                var _this16 = this;
+                var _this17 = this;
 
                 var expression = parameters.replace(/\n\s*/g, '');
                 var getter = this.$parseDirectiveGetterParameters(expression);
@@ -1182,7 +1173,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                         var value = data.$data;
 
                         data.$transform.forEach(function (transformation) {
-                            var transform = _this16.$parseDirectiveTransformation(transformation);
+                            var transform = _this17.$parseDirectiveTransformation(transformation);
                             var param = new Function('', 'return ' + transform.parameters + ';');
 
                             value = EMV.transformations[transform.name](value, param());
@@ -1369,8 +1360,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
                 Object.keys(value).forEach(function (classname) {
-                    var classes = classname.split(' '),
-                        classList = element.classList;
+                    var classes = classname.split(' ');
+                    var classList = element.classList;
 
                     classes.forEach(function (cl) {
                         if (value[classname]) {
@@ -1444,8 +1435,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             element[element.contentEditable === 'true' ? 'onblur' : 'onchange'] = function () {
                 var value = void 0;
 
-                var nodeName = element.nodeName.toLowerCase(),
-                    type = element.type;
+                var nodeName = element.nodeName.toLowerCase();
+                var type = element.type;
 
                 switch (nodeName) {
                     case 'input':
@@ -1461,6 +1452,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                             case 'number':
                                 value = parseFloat(element.value);
+                                if (isNaN(value)) {
+                                    value = element.value;
+                                }
                                 break;
 
                             case 'date':
@@ -1497,8 +1491,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 value = '';
             }
 
-            var nodeName = element.nodeName.toLowerCase(),
-                type = element.type;
+            var nodeName = element.nodeName.toLowerCase();
+            var type = element.type;
 
             switch (nodeName) {
                 case 'input':
@@ -1569,7 +1563,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             element.value = value || '';
 
-            element.setSelectionRange(start, end);
+            if (element.type === 'text') {
+                element.setSelectionRange(start, end);
+            }
         }
     });
 
@@ -1578,17 +1574,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             element.addEventListener('focus', function () {
                 try {
                     model.$setDirectiveValue(parameters, element, true);
-                } catch (err) {
-                    noop();
-                }
+                } catch (err) {}
             });
 
             element.addEventListener('blur', function () {
                 try {
                     model.$setDirectiveValue(parameters, element, false);
-                } catch (err) {
-                    noop();
-                }
+                } catch (err) {}
             });
         },
         update: function update(element, parameters, model) {
@@ -1612,8 +1604,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 throw new EMVError('options directive can be applied only on select tags');
             }
 
-            var value = model.$getDirectiveValue(parameters, element),
-                options = value.valueOf();
+            var value = model.$getDirectiveValue(parameters, element);
+            var options = value.valueOf();
 
             if (!value) {
                 return;
@@ -1725,16 +1717,16 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     EMV.directive('on', {
         bind: function bind(element, parameters, model) {
-            var parser = model.$parseDirectiveGetterParameters(parameters),
-                events = parser(model.$getContext(element));
+            var parser = model.$parseDirectiveGetterParameters(parameters);
+            var events = parser(model.$getContext(element));
 
             if ((typeof events === 'undefined' ? 'undefined' : _typeof(events)) !== 'object') {
                 return;
             }
 
             Object.keys(events).forEach(function (event) {
-                var action = events[event],
-                    listener = 'on' + event;
+                var action = events[event];
+                var listener = 'on' + event;
 
                 element[listener] = function (event) {
                     action(model.$getContext(element), event);
@@ -1751,6 +1743,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
             var action = model.$parseDirectiveGetterParameters(parameters);
 
             element.addEventListener('submit', function (event) {
+                event.preventDefault();
+
                 var result = action(model.$getContext(element));
 
                 if (typeof result === 'function') {
@@ -1811,21 +1805,54 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
         update: function update(meta, parameters, model) {
             var element = meta.$initialElement;
             var param = model.$getDirectiveValue(parameters, element);
+            var isObject = false;
 
             if (!param) {
                 // The directive parameters render an empty value, quit the directive
                 return;
             }
 
-            var list = param && Array.from('$data' in param ? param.$data || [] : param) || [];
+            var list = param.$data || param;
 
-            list = list.filter(function (item) {
-                return item !== undefined && item !== null;
-            });
+            if (isPrimitive(list)) {
+                return;
+            }
 
-            // Filter the list
-            if (param.$filter) {
-                list = list.filter(param.$filter);
+            if (Array.isArray(list)) {
+                // The input is an array
+                // Filter the list
+                list = list.filter(function (item) {
+                    if (item === undefined || item === null) {
+                        return false;
+                    }
+
+                    if (param.$filter && !param.$filter(item)) {
+                        return false;
+                    }
+
+                    return true;
+                });
+            } else {
+                isObject = true;
+                var values = Object.keys(list).filter(function (key) {
+                    var item = list[key];
+
+                    if (item === undefined || item === null) {
+                        return false;
+                    }
+
+                    if (param.$filter && !param.$filter(item)) {
+                        return false;
+                    }
+
+                    return true;
+                }).map(function (key) {
+                    list[key].$key = key;
+
+                    return list[key];
+                });
+
+                list = values;
             }
 
             // Order the list
@@ -1843,8 +1870,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 list.reverse();
             }
 
-            var offset = param.$offset || 0,
-                end = offset + (param.$limit || list.length);
+            var offset = param.$offset || 0;
+            var end = offset + (param.$limit || list.length);
 
             list = list.slice(offset, end);
 
@@ -1890,7 +1917,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
                 // The item does not exist, create it
                 var additionalProperties = {
-                    $index: index
+                    $index: isObject ? item.$key : index
                 };
 
                 if (param.$item) {
@@ -2137,7 +2164,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.2.0',
+        value: '3.2.1',
         writable: false
     });
 

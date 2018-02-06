@@ -1,8 +1,7 @@
 /*global define, module, exports*/
-/* eslint no-invalid-this:0 */
 
 /**
- * emv.js 3.2.0
+ * emv.js 3.2.1
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -10,16 +9,14 @@
 'use strict';
 
 (function(global, factory) {
-    if(typeof exports === 'object' && typeof module !== 'undefined') {
+    if (typeof exports === 'object' && typeof module !== 'undefined') {
         module.exports = factory();
-    }
-    else if (typeof define === 'function' && define.amd) {
+    } else if (typeof define === 'function' && define.amd) {
         define(factory);
-    }
-    else {
+    } else {
         global.EMV = factory();
     }
-})(this, function() {
+})(this, () => {
     /**
      * Generate a unique id
      * @returns {[type]} [description]
@@ -31,17 +28,12 @@
          */
         function s4() {
             return Math.floor((1 + Math.random()) * 0x10000)
-                .toString(16)
-                .substring(1);
+            .toString(16)
+            .substring(1);
         }
 
-        return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+        return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
     }
-
-    /**
-     * Noop function
-     */
-    function noop() {}
 
     /**
      * Detect if a value is a primitive value
@@ -50,7 +42,7 @@
      * @returns {boolean} True if the variable is primitive
      */
     function isPrimitive(variable) {
-        let types = [
+        const types = [
             'string',
             'number',
             'boolean',
@@ -80,7 +72,7 @@
          * @param   {string} message The error message
          */
         constructor(message) {
-            let fullMessage = `EMV Error : ${message}`;
+            const fullMessage = `EMV Error : ${message}`;
 
             super(fullMessage);
         }
@@ -141,9 +133,9 @@
                 this.$observe(key, initValue[key], upperKey);
             });
 
-            if(initValue.constructor.name !== 'Object') {
+            if (initValue.constructor.name !== 'Object') {
                 Object.getOwnPropertyNames(initValue.constructor.prototype).forEach((functionName) => {
-                    if(!this.constructor.prototype[functionName]) {
+                    if (!this.constructor.prototype[functionName]) {
                         this.constructor.prototype[functionName] = initValue.constructor.prototype[functionName];
                     }
                 });
@@ -157,26 +149,26 @@
          * @param {string} upperKey The key to retrieve this object from the parent object
          */
         $observe(key, initValue, upperKey) {
-            if(this.$observed.has(key)) {
+            if (this.$observed.has(key)) {
                 return;
             }
 
             const handler = {
                 get : () => {
-                    let value = this.$object[key];
+                    const value = this.$object[key];
 
-                    if(this.$root && typeof value !== 'function') {
-                        if(this.$root.$executingComputed) {
-                            if(!this.$callers[key]) {
+                    if (this.$root && typeof value !== 'function') {
+                        if (this.$root.$executingComputed) {
+                            if (!this.$callers[key]) {
                                 this.$callers[key] = {};
                             }
                             // Find if this computed already registred in the observable computed
-                            if(!this.$callers[key][this.$root.$executingComputed.uid]) {
+                            if (!this.$callers[key][this.$root.$executingComputed.uid]) {
                                 const computed = this.$root.$executingComputed;
                                 const callerObject = computed.object;
 
                                 Object.keys(callerObject.$computed).every((computedName) => {
-                                    if(callerObject.$computed[computedName] === computed) {
+                                    if (callerObject.$computed[computedName] === computed) {
                                         this.$callers[key][computed.uid] = {
                                             property : computedName,
                                             reader   : computed.reader,
@@ -192,8 +184,8 @@
                             }
                         }
 
-                        if(this.$root.$executingDirective) {
-                            if(!this.$directives[key]) {
+                        if (this.$root.$executingDirective) {
+                            if (!this.$directives[key]) {
                                 this.$directives[key] = new Set([]);
                             }
 
@@ -207,47 +199,43 @@
                 set : (value) => {
                     let notifyParent = false;
 
-                    if(!(key in this.$object) && !this.$root.$creatingContext) {
+                    if (!(key in this.$object) && !this.$root.$creatingContext) {
                         // The property is created on the object, it means the parent object has been modified
                         notifyParent = true;
                     }
 
-                    if(typeof value === 'function' || value instanceof HTMLElement) {
+                    if (typeof value === 'function' || value instanceof HTMLElement) {
                         this.$object[key] = value;
 
                         return true;
                     }
 
-                    let oldValue = this.$object[key];
+                    const oldValue = this.$object[key];
 
-                    if(!isPrimitive(value) && !(value instanceof EMVObservable)) {
-                        if(Array.isArray(value)) {
+                    if (!isPrimitive(value) && !(value instanceof EMVObservable)) {
+                        if (Array.isArray(value)) {
                             this.$object[key] = new EMVObservableArray(value, this.$root || this, this, key);
-                        }
-                        else {
+                        } else {
                             this.$object[key] = new EMVObservable(value, this.$root || this, this, key);
                         }
-                    }
-                    else {
+                    } else {
                         this.$object[key] = value;
-                        if(value instanceof EMV) {
+                        if (value instanceof EMV) {
                             value.$setRoot(this.$root || this);
                             value.$parent = this;
                         }
                     }
 
-                    if(this.$computed[key] && this.$computed[key].writer) {
+                    if (this.$computed[key] && this.$computed[key].writer) {
                         try {
                             this.$computed[key].writer(this, value, oldValue);
-                        }
-                        catch(err) {
-                            noop();
-                        }
+                        } catch (err) {}
                     }
-                    if(oldValue !== value) {
+
+                    if (oldValue !== value) {
                         this.$notifySubscribers(key, value, oldValue);
 
-                        if(notifyParent && this.$parent) {
+                        if (notifyParent && this.$parent) {
                             this.$parent.$notifySubscribers(upperKey, this.$parent);
                         }
                     }
@@ -272,7 +260,7 @@
         $setRoot($root) {
             this.$root = $root;
             Object.keys(this.$object).forEach((key) => {
-                if(this.$object[key] instanceof EMVObservable) {
+                if (this.$object[key] instanceof EMVObservable) {
                     this.$object[key].$setRoot($root);
                 }
             });
@@ -285,13 +273,13 @@
          * @param  {mixed}  oldValue The previous value of the property
          */
         $notifySubscribers(key, val, oldValue) {
-            if(!key) {
+            if (!key) {
                 return;
             }
 
             const value = val === undefined ? this[key] : val;
 
-            if(this.$callers[key]) {
+            if (this.$callers[key]) {
                 Object.keys(this.$callers[key]).forEach((uid) => {
                     const caller = this.$callers[key][uid];
 
@@ -299,23 +287,23 @@
                 });
             }
 
-            if(this.$watchers[key]) {
+            if (this.$watchers[key]) {
                 Object.keys(this.$watchers[key]).forEach((uid) => {
                     this.$watchers[key][uid].call(this, value, oldValue);
                 });
             }
 
-            if(this.$directives[key]) {
+            if (this.$directives[key]) {
                 this.$directives[key].forEach((uid) => {
                     const directive = this.$root.$directives[uid];
 
-                    if(!directive) {
+                    if (!directive) {
                         this.$directives[key].delete(uid);
 
                         return;
                     }
 
-                    if(directive && directive.handler.update) {
+                    if (directive && directive.handler.update) {
                         directive.handler.update(
                             directive.element,
                             directive.parameters,
@@ -331,7 +319,7 @@
          * @returns {Object} The object data
          */
         valueOf() {
-            let result = {};
+            const result = {};
 
             Object.keys(this).forEach((key) => {
                 result[key] = this[key] ? this[key].valueOf() : this[key];
@@ -355,7 +343,7 @@
          *                            This function get two paramters, newValue and oldValue
          */
         $watch(prop, handler) {
-            if(Array.isArray(prop)) {
+            if (Array.isArray(prop)) {
                 prop.forEach((subprop) => {
                     this.$watch(subprop, handler);
                 });
@@ -363,21 +351,19 @@
                 return;
             }
 
-            let propSteps = prop.split('.'),
-                observable,
-                finalProp = propSteps.pop();
+            const propSteps = prop.split('.');
+            const finalProp = propSteps.pop();
+            let observable = this.$this;
 
-            observable = this.$this;
-
-            propSteps.forEach((step) =>{
+            propSteps.forEach((step) => {
                 observable = observable[step];
             });
 
-            if(!observable) {
+            if (!observable) {
                 return;
             }
 
-            if(!observable.$watchers[finalProp]) {
+            if (!observable.$watchers[finalProp]) {
                 observable.$watchers[finalProp] = {};
             }
 
@@ -393,9 +379,9 @@
          *                               all watchers on this property are unbound
          */
         $unwatch(prop, handler) {
-            let propSteps = prop.split('.'),
-                observable,
-                finalProp = propSteps.pop();
+            const propSteps = prop.split('.');
+            const finalProp = propSteps.pop();
+            let observable = this.$this;
 
             observable = this.$this;
 
@@ -403,11 +389,10 @@
                 observable = observable[step];
             });
 
-            if(observable.$watchers[finalProp]) {
-                if(handler) {
+            if (observable.$watchers[finalProp]) {
+                if (handler) {
                     delete observable.$watchers[finalProp][handler.uid];
-                }
-                else {
+                } else {
                     observable.$watchers[finalProp] = {};
                 }
             }
@@ -450,7 +435,7 @@
 
     // Copy the prototype functions from Array to EMVObservableArray prototype
     Object.getOwnPropertyNames(Array.prototype).forEach((key) => {
-        if(!EMVObservableArray.prototype[key]) {
+        if (!EMVObservableArray.prototype[key]) {
             EMVObservableArray.prototype[key] = Array.prototype[key];
         }
     });
@@ -465,31 +450,28 @@
          * @param {Object} object       The object this computed is affected on
          */
         constructor(handler, object) {
-            let self = this;
-
             this.uid = guid();
             this.object = object;
 
             const handlers = typeof handler === 'function' ? {read : handler} : handler;
 
-            if(handlers.write) {
+            if (handlers.write) {
                 this.writer = function(target, value, oldValue) {
                     handlers.write.call(target, value, oldValue);
                 };
             }
 
-            if(handlers.read) {
-                this.reader = function(target) {
+            if (handlers.read) {
+                this.reader = (target) => {
                     const previousComputed = object.$root.$executingComputed;
 
-                    object.$root.$executingComputed = self;
+                    object.$root.$executingComputed = this;
 
                     let value;
 
                     try {
                         value = handlers.read.call(target);
-                    }
-                    catch(err) {
+                    } catch (err) {
                         value = undefined;
                     }
 
@@ -519,8 +501,8 @@
 
             const self = this;
 
-            let computeDirectiveMethod = (method) => {
-                if(binder[method]) {
+            const computeDirectiveMethod = (method) => {
+                if (binder[method]) {
                     this[method] = (element, parameters, model) => {
                         const previousDirective = model.$root.$executingDirective;
 
@@ -554,7 +536,7 @@
          * @returns {string}          The directive uid for the given attached element
          */
         getUid(element) {
-            if(!element.$uid) {
+            if (!element.$uid) {
                 element.$uid = guid();
             }
 
@@ -599,7 +581,7 @@
                 }
             });
 
-            if(options.computed) {
+            if (options.computed) {
                 Object.keys(options.computed).forEach((key) => {
                     this.$computed[key] = new EMVComputed(options.computed[key], this);
 
@@ -608,10 +590,9 @@
             }
 
             Object.keys(this.$computed).forEach((key) => {
-                if(this.$computed[key].reader) {
+                if (this.$computed[key].reader) {
                     this[key] = this.$computed[key].reader(this);
-                }
-                else {
+                } else {
                     this[key] = undefined;
                 }
             });
@@ -623,7 +604,7 @@
          * @param  {DOMNode} element The node to apply the EMV instance on
          */
         $apply(element) {
-            if(this.$rootElement) {
+            if (this.$rootElement) {
                 throw new EMVError('an emv instance cannot be instanciated on multiple DOM elements.');
             }
 
@@ -643,15 +624,15 @@
          * @param {Array} excludes  The directives to not clean
          */
         $clean(element, excludes) {
-            let elem = element || this.$rootElement;
+            const elem = element || this.$rootElement;
 
-            if(!elem) {
+            if (!elem) {
                 return;
             }
 
-            if(elem.$directives) {
+            if (elem.$directives) {
                 Object.keys(elem.$directives).forEach((directive) => {
-                    if(!excludes || excludes.indexOf(directive) === -1) {
+                    if (!excludes || excludes.indexOf(directive) === -1) {
                         const uid = elem.$directives[directive];
 
                         delete this.$directives[uid];
@@ -660,13 +641,13 @@
                 });
             }
 
-            if(elem.children) {
+            if (elem.children) {
                 Array.from(elem.children).forEach((child) => {
                     this.$clean(child);
                 });
             }
 
-            if(elem === this.$rootElement) {
+            if (elem === this.$rootElement) {
                 delete this.$rootElement;
             }
         }
@@ -692,7 +673,7 @@
         $parseDirectiveTransformation(transformation) {
             const match = (/^(\w+)(\((.+)\))?$/).exec(transformation);
 
-            if(match) {
+            if (match) {
                 const name = match[1];
                 const param = `{${match[3] || ''}}`;
 
@@ -713,7 +694,7 @@
          */
         $parseHandlebardDirective(element, value) {
             const safeStringRegex = new RegExp(
-                escapeRegExp(EMV.config.delimiters[0]) + '(.+?)' + escapeRegExp(EMV.config.delimiters[1]),
+                `${escapeRegExp(EMV.config.delimiters[0])}(.+?)${escapeRegExp(EMV.config.delimiters[1])}`,
                 'g'
             );
 
@@ -723,20 +704,19 @@
                 this.$getContext(element.parentNode);
 
                 const parameters = value.replace(safeStringRegex, (match, expression) => {
-                    var steps = expression.split('::').map((step) => {
+                    const steps = expression.split('::').map((step) => {
                         return step.trim();
                     });
 
                     let result = steps[0];
 
-                    if(steps.length > 1) {
+                    if (steps.length > 1) {
                         steps.slice(1).forEach((transformation) => {
                             try {
                                 const transform = this.$parseDirectiveTransformation(transformation);
 
                                 result = `$root.constructor.transformations.${transform.name}(${result}, ${transform.parameters})`;
-                            }
-                            catch(err) {
+                            } catch (err) {
                                 throw new EMVError(`Error while parsing directive transformation : ${value}`);
                             }
                         });
@@ -758,7 +738,7 @@
          * @param   {Array} excludes The directives to no parse on the element
          */
         $parse(element, excludes) {
-            if(element.$directives) {
+            if (element.$directives) {
                 return;
             }
 
@@ -766,29 +746,27 @@
                 // Parse templates
                 this.$registerTemplate(element.id, element.innerHTML);
                 element.parentNode.removeChild(element);
-            }
-            else if(element.nodeName.toLowerCase() === '#text') {
+            } else if (element.nodeName.toLowerCase() === '#text') {
                 // Parse raw directives in texts
                 const parameters = this.$parseHandlebardDirective(element, element.textContent);
 
-                if(parameters !== null) {
+                if (parameters !== null) {
                     this.$setElementDirective(element, 'text', `'${parameters}'`);
                 }
-            }
-            else if(element.attributes) {
+            } else if (element.attributes) {
                 // Parse attributes directives
                 Object.keys(EMV.directives).forEach((name) => {
-                    if((!excludes || excludes.indexOf(name) === -1) && element.getAttribute) {
+                    if ((!excludes || excludes.indexOf(name) === -1) && element.getAttribute) {
                         const attribute = `${EMV.config.attributePrefix}-${name}`;
 
-                        if(element.hasAttribute(attribute)) {
+                        if (element.hasAttribute(attribute)) {
                             const parameters = element.getAttribute(attribute);
                             const directive = EMV.directives[name];
 
                             this.$getContext(element);
                             this.$setElementDirective(element, name, parameters);
 
-                            if(directive.init) {
+                            if (directive.init) {
                                 directive.init.call(this, element, parameters, this);
                             }
                         }
@@ -802,13 +780,12 @@
 
                     const attrValue = this.$parseHandlebardDirective(element, value);
 
-                    if(attrValue !== null) {
-                        let attrDirective = this.$directives[element.$directives && element.$directives.attr];
-
+                    if (attrValue !== null) {
+                        const attrDirective = this.$directives[element.$directives && element.$directives.attr];
                         let parameters = attrDirective && attrDirective.parameters || '';
 
-                        if(parameters) {
-                            parameters = parameters.substring(1, parameters.length - 1) + ',';
+                        if (parameters) {
+                            parameters = `${parameters.substring(1, parameters.length - 1)},`;
                         }
 
                         parameters += `'${attributeName}' : '${attrValue}'`;
@@ -820,7 +797,7 @@
                 });
             }
 
-            if(element.childNodes) {
+            if (element.childNodes) {
                 Array.from(element.childNodes).forEach((child) => {
                     this.$parse(child);
                 });
@@ -834,11 +811,11 @@
          * @param {string} parameters The directive parameters
          */
         $setElementDirective(element, name, parameters) {
-            if(!element.$directives) {
+            if (!element.$directives) {
                 element.$directives = {};
             }
 
-            if(!element.$uid) {
+            if (!element.$uid) {
                 element.$uid = guid();
             }
 
@@ -865,34 +842,35 @@
             element.$stopRenderingPropagation = false;
 
             // Variable to stop to render
-            if(element.$directives) {
-                Object.keys(element.$directives).forEach(function(name) {
-                    if((!excludes || excludes.indexOf(name) === -1) && !element.$stopRenderingPropagation) {
+            if (element.$directives) {
+                Object.keys(element.$directives).forEach((name) => {
+                    if ((!excludes || excludes.indexOf(name) === -1) && !element.$stopRenderingPropagation) {
                         const uid = element.$directives[name];
                         const directive = this.$directives[uid];
 
-                        if(!directive) {
+                        if (!directive) {
                             return;
                         }
 
                         const handler = directive.handler;
                         const parameters = directive.parameters;
 
-                        if(handler.bind) {
+                        if (handler.bind) {
                             handler.bind.call(this, element, parameters, this);
                         }
-                        if(handler.update) {
+
+                        if (handler.update) {
                             handler.update.call(this, element, parameters, this);
                         }
                     }
-                }.bind(this));
+                });
             }
 
-            if(!document.documentElement.contains(element)) {
+            if (!document.documentElement.contains(element)) {
                 return;
             }
 
-            if(!element.$stopRenderingPropagation && element.childNodes) {
+            if (!element.$stopRenderingPropagation && element.childNodes) {
                 Array.from(element.childNodes).forEach((child) => {
                     this.$render(child);
                 });
@@ -919,13 +897,12 @@
 
             let context = object;
 
-            if(object instanceof EMVObservable) {
+            if (object instanceof EMVObservable) {
                 // context = object;
                 context.$this = object;
                 context.$parent = object.$parent;
                 context.$root = this;
-            }
-            else {
+            } else {
                 context = {
                     $this                 : object,
                     $parent               : object.$parent,
@@ -934,10 +911,10 @@
                 };
             }
 
-            let additionalProperties = this.$getAdditionalContextProperties(element);
+            const additionalProperties = this.$getAdditionalContextProperties(element);
 
             additionalProperties.forEach((key) => {
-                if(['$this', '$parent', '$root'].indexOf(key) !== -1) {
+                if (['$this', '$parent', '$root'].indexOf(key) !== -1) {
                     throw new EMVError(`You cannot apply the key '${key}' as additionnal context property`);
                 }
 
@@ -950,7 +927,7 @@
 
             element.$additionalContextProperties = new Set(additionalProperties);
 
-            if(otherParams) {
+            if (otherParams) {
                 Object.keys(otherParams).forEach((key) => {
                     context.$additionalProperties.add(key);
 
@@ -975,7 +952,7 @@
         $removeContext(element) {
             delete element.$context;
 
-            if(element.children) {
+            if (element.children) {
                 Array.from(element.children).forEach((child) => {
                     this.$removeContext(child);
                 });
@@ -988,15 +965,15 @@
          * @returns {Object}       The DOM node context
          */
         $getContext(element) {
-            if(!element) {
+            if (!element) {
                 return {};
             }
 
-            if(element.$context) {
+            if (element.$context) {
                 return element.$context;
             }
 
-            let context = this.$getContext(element.parentNode);
+            const context = this.$getContext(element.parentNode);
 
             element.$context = context;
 
@@ -1010,18 +987,18 @@
          * @returns {Object}       The DOM node context
          */
         $getAdditionalContextProperties(element) {
-            if(element.$additionalContextProperties) {
+            if (element.$additionalContextProperties) {
                 return element.$additionalContextProperties;
             }
 
-            if(element === this.$rootElement) {
+            if (element === this.$rootElement) {
                 return new Set([]);
             }
 
             const parent = element.parentNode || element.$parent;
 
-            if(parent) {
-                let additionalContextProperties = this.$getAdditionalContextProperties(parent);
+            if (parent) {
+                const additionalContextProperties = this.$getAdditionalContextProperties(parent);
 
                 element.$additionalContextProperties = additionalContextProperties;
 
@@ -1055,8 +1032,8 @@
             try {
                 const data = getter(realContext);
 
-                if(typeof data === 'object' && data.$transform && '$data' in data) {
-                    if(!Array.isArray(data.$transform)) {
+                if (typeof data === 'object' && data.$transform && '$data' in data) {
+                    if (!Array.isArray(data.$transform)) {
                         data.$transform = [data.$transform];
                     }
 
@@ -1073,8 +1050,7 @@
                 }
 
                 return data;
-            }
-            catch(err) {
+            } catch (err) {
                 return undefined;
             }
         }
@@ -1088,7 +1064,7 @@
             let variable = parameters;
             const match = parameters.match(/\$(?:data|set)\s*:\s*(.+?)\s*[,}]/);
 
-            if(match) {
+            if (match) {
                 variable = match[1];
             }
 
@@ -1107,12 +1083,11 @@
          * @param {mixed}   value      The value to set
          */
         $setDirectiveValue(parameters, element, value) {
-            let setter = this.$parseDirectiveSetterParameters(parameters);
+            const setter = this.$parseDirectiveSetterParameters(parameters);
 
             try {
                 setter(this.$getContext(element), value);
-            }
-            catch(err) {
+            } catch (err) {
                 throw new EMVError(err.message);
             }
         }
@@ -1147,16 +1122,16 @@
         $insertRemoveElement(element, value, baseon, force) {
             const baseElement = baseon || element;
 
-            if(value) {
+            if (value) {
                 const createElement = !baseElement.$parent.contains(element) || force;
 
-                if(createElement) {
+                if (createElement) {
                     // Insert the node
                     let before = null;
 
-                    if(element.$before) {
-                        element.$before.every(function(node) {
-                            if(baseElement.$parent.contains(node)) {
+                    if (element.$before) {
+                        element.$before.every((node) => {
+                            if (baseElement.$parent.contains(node)) {
                                 before = node;
 
                                 return false;
@@ -1166,24 +1141,21 @@
                         });
                     }
 
-                    if(before) {
-                        if(before.nextElementSibling) {
+                    if (before) {
+                        if (before.nextElementSibling) {
                             baseElement.$parent.insertBefore(element, before.nextElementSibling);
-                        }
-                        else {
+                        } else {
                             baseElement.$parent.appendChild(element);
                         }
-                    }
-                    else {
+                    } else {
                         baseElement.$parent.insertBefore(element, baseElement.$parent.firstChild);
                     }
                 }
-            }
-            else {
+            } else {
                 this.$stopRenderingPropagation(element);
 
                 // remove the node
-                if(baseElement.$parent.contains(element)) {
+                if (baseElement.$parent.contains(element)) {
                     baseElement.$parent.removeChild(element);
                 }
             }
@@ -1203,12 +1175,11 @@
     // Show / hide an element
     EMV.directive('show', {
         update : function(element, parameters, model) {
-            let value = model.$getDirectiveValue(parameters, element);
+            const value = model.$getDirectiveValue(parameters, element);
 
-            if(value) {
+            if (value) {
                 element.style.display = '';
-            }
-            else {
+            } else {
                 element.style.display = 'none';
             }
         }
@@ -1221,38 +1192,37 @@
 
             if (!element.originalClassList) {
                 element.originalClassList = [];
-                Array.from(element.classList).forEach(function(classname) {
+                Array.from(element.classList).forEach((classname) => {
                     element.originalClassList.push(classname);
                 });
             }
 
             // Reset the element to it original class list before applying calculated classes
-            Array.from(element.classList).forEach(function(classname) {
-                if(element.originalClassList.indexOf(classname) === -1) {
+            Array.from(element.classList).forEach((classname) => {
+                if (element.originalClassList.indexOf(classname) === -1) {
                     element.classList.remove(classname);
                 }
             });
 
-            if(!value) {
+            if (!value) {
                 return;
             }
 
-            if(typeof value === 'string') {
+            if (typeof value === 'string') {
                 value = {
                     [value] : true
                 };
             }
 
-            if(typeof value === 'object') {
-                Object.keys(value).forEach(function(classname) {
-                    let classes = classname.split(' '),
-                        classList = element.classList;
+            if (typeof value === 'object') {
+                Object.keys(value).forEach((classname) => {
+                    const classes = classname.split(' ');
+                    const classList = element.classList;
 
-                    classes.forEach(function(cl) {
-                        if(value[classname]) {
+                    classes.forEach((cl) => {
+                        if (value[classname]) {
                             classList.add(cl);
-                        }
-                        else {
+                        } else {
                             classList.remove(cl);
                         }
                     });
@@ -1263,19 +1233,18 @@
 
     EMV.directive('style', {
         update : function(element, parameters, model) {
-            let styles = model.$getDirectiveValue(parameters, element);
+            const styles = model.$getDirectiveValue(parameters, element);
 
-            if(!styles || typeof styles !== 'object') {
+            if (!styles || typeof styles !== 'object') {
                 return;
             }
 
-            Object.keys(styles).forEach(function(attr) {
-                let value = styles[attr];
+            Object.keys(styles).forEach((attr) => {
+                const value = styles[attr];
 
-                if(!value) {
+                if (!value) {
                     element.style[attr] = '';
-                }
-                else {
+                } else {
                     element.style[attr] = value;
                 }
             });
@@ -1284,19 +1253,18 @@
 
     EMV.directive('attr', {
         update : function(element, parameters, model) {
-            let attributes = model.$getDirectiveValue(parameters, element);
+            const attributes = model.$getDirectiveValue(parameters, element);
 
-            if(!attributes || typeof attributes !== 'object') {
+            if (!attributes || typeof attributes !== 'object') {
                 return;
             }
 
-            Object.keys(attributes).forEach(function(attr) {
-                let value = attributes[attr];
+            Object.keys(attributes).forEach((attr) => {
+                const value = attributes[attr];
 
-                if(!value) {
+                if (!value) {
                     element.removeAttribute(attr);
-                }
-                else {
+                } else {
                     element.setAttribute(attr, value);
                 }
             });
@@ -1305,12 +1273,11 @@
 
     EMV.directive('disabled', {
         update : function(element, parameters, model) {
-            let value = model.$getDirectiveValue(parameters, element);
+            const value = model.$getDirectiveValue(parameters, element);
 
-            if(!value) {
+            if (!value) {
                 element.removeAttribute('disabled');
-            }
-            else {
+            } else {
                 element.setAttribute('disabled', true);
             }
         }
@@ -1324,13 +1291,13 @@
             element[element.contentEditable === 'true' ? 'onblur' : 'onchange'] = function() {
                 let value;
 
-                let nodeName = element.nodeName.toLowerCase(),
-                    type = element.type;
+                const nodeName = element.nodeName.toLowerCase();
+                const type = element.type;
 
-                switch(nodeName) {
+                switch (nodeName) {
                     case 'input' :
                     case 'select' :
-                        switch(type) {
+                        switch (type) {
                             case 'checkbox' :
                                 value = Boolean(element.checked);
                                 break;
@@ -1341,6 +1308,9 @@
 
                             case 'number' :
                                 value = parseFloat(element.value);
+                                if (isNaN(value)) {
+                                    value = element.value;
+                                }
                                 break;
 
                             case 'date' :
@@ -1358,7 +1328,7 @@
                         break;
 
                     default :
-                        if(element.contentEditable) {
+                        if (element.contentEditable) {
                             value = element.innerHTML;
 
                             break;
@@ -1373,38 +1343,39 @@
         update : function(element, parameters, model) {
             let value = model.$getDirectiveValue(parameters, element);
 
-            if(value === undefined) {
+            if (value === undefined) {
                 value = '';
             }
 
-            let nodeName = element.nodeName.toLowerCase(),
-                type = element.type;
+            const nodeName = element.nodeName.toLowerCase();
+            const type = element.type;
 
-            switch(nodeName) {
+            switch (nodeName) {
                 case 'input' :
                 case 'select' :
-                    switch(type) {
+                    switch (type) {
                         case 'checkbox' :
                             element.checked = Boolean(value);
                             break;
 
                         case 'radio' : {
-                            let radio = document.querySelector(`input[name="${element.name}"][value="${value}"]`);
+                            const radio = document.querySelector(`input[name="${element.name}"][value="${value}"]`);
 
-                            if(radio) {
+                            if (radio) {
                                 radio.checked = true;
                             }
                             break;
                         }
 
                         case 'date' : {
-                            if(!(value instanceof Date)) {
+                            if (!(value instanceof Date)) {
                                 value = new Date(value);
                             }
 
                             const year = value.getFullYear();
                             const month = (value.getMonth() + 1).toString().padStart(2, '0');
-                            const date = value.getDate().toString().padStart(2, '0');
+                            const date = value.getDate().toString()
+                            .padStart(2, '0');
 
                             element.value = `${year}-${month}-${date}`;
                             break;
@@ -1424,10 +1395,9 @@
                     break;
 
                 default :
-                    if(element.contentEditable) {
+                    if (element.contentEditable) {
                         element.innerHTML = value;
-                    }
-                    else {
+                    } else {
                         element.value = value;
                     }
                     break;
@@ -1437,7 +1407,7 @@
 
     EMV.directive('input', {
         bind : function(element, parameters, model) {
-            element.addEventListener('input', function() {
+            element.addEventListener('input', () => {
                 model.$setDirectiveValue(parameters, element, element.value);
             });
         },
@@ -1448,41 +1418,36 @@
 
             element.value = value || '';
 
-            element.setSelectionRange(start, end);
+            if (element.type === 'text') {
+                element.setSelectionRange(start, end);
+            }
         }
     });
 
     EMV.directive('focus', {
         bind : function(element, parameters, model) {
-            element.addEventListener('focus', function() {
+            element.addEventListener('focus', () => {
                 try {
                     model.$setDirectiveValue(parameters, element, true);
-                }
-                catch(err) {
-                    noop();
-                }
+                } catch (err) {}
             });
 
-            element.addEventListener('blur', function() {
+            element.addEventListener('blur', () => {
                 try {
                     model.$setDirectiveValue(parameters, element, false);
-                }
-                catch(err) {
-                    noop();
-                }
+                } catch (err) {}
             });
         },
         update : function(element, parameters, model) {
             let value = model.$getDirectiveValue(parameters, element);
 
-            if(typeof value === 'object' && '$get' in value) {
+            if (typeof value === 'object' && '$get' in value) {
                 value = value.$get;
             }
 
-            if(value && element !== document.activeElement) {
+            if (value && element !== document.activeElement) {
                 element.focus();
-            }
-            else if(!value && element === document.activeElement) {
+            } else if (!value && element === document.activeElement) {
                 element.blur();
             }
         }
@@ -1490,36 +1455,36 @@
 
     EMV.directive('options', {
         update : function(element, parameters, model) {
-            if(element.nodeName.toLowerCase() !== 'select') {
+            if (element.nodeName.toLowerCase() !== 'select') {
                 throw new EMVError('options directive can be applied only on select tags');
             }
 
-            let value = model.$getDirectiveValue(parameters, element),
-                options = value.valueOf();
+            const value = model.$getDirectiveValue(parameters, element);
+            let options = value.valueOf();
 
-            if(!value) {
+            if (!value) {
                 return;
             }
 
-            if('$data' in value && !value.$data) {
+            if ('$data' in value && !value.$data) {
                 return;
             }
 
-            if(value.$data) {
+            if (value.$data) {
                 options = {};
                 const $data = value.$data.valueOf();
 
-                Object.keys($data).forEach(function(key) {
-                    let line = value.$data[key];
-                    let optionValue = value.$value ? line[value.$value] : key;
-                    let optionLabel = value.$label ? line[value.$label] : line;
+                Object.keys($data).forEach((key) => {
+                    const line = value.$data[key];
+                    const optionValue = value.$value ? line[value.$value] : key;
+                    const optionLabel = value.$label ? line[value.$label] : line;
 
                     options[optionValue] = optionLabel;
                 });
             }
 
             // Reset the select
-            let currentValue = element.value || value.$selected;
+            const currentValue = element.value || value.$selected;
 
             element.innerHTML = '';
 
@@ -1529,19 +1494,19 @@
              * @param   {string} label The option label
              */
             function insertOptionTag(value, label) {
-                let optionTag = document.createElement('option');
+                const optionTag = document.createElement('option');
 
                 optionTag.value = value;
                 optionTag.innerText = label;
-                if(value.toString() === currentValue) {
+                if (value.toString() === currentValue) {
                     optionTag.selected = true;
                 }
 
                 element.appendChild(optionTag);
             }
 
-            Object.keys(options).forEach(function(value) {
-                let label = options[value];
+            Object.keys(options).forEach((value) => {
+                const label = options[value];
 
                 insertOptionTag(value, label);
             });
@@ -1554,12 +1519,11 @@
      */
     EMV.directive('text', {
         update : function(element, parameters, model) {
-            let value = model.$getDirectiveValue(parameters, element);
+            const value = model.$getDirectiveValue(parameters, element);
 
-            if(element.nodeName === '#text') {
+            if (element.nodeName === '#text') {
                 element.nodeValue = value;
-            }
-            else {
+            } else {
                 element.innerText = value;
             }
         }
@@ -1574,12 +1538,11 @@
             const scripts = element.querySelectorAll('script');
 
             Array.from(scripts).forEach((script) => {
-                if(script.innerText) {
+                if (script.innerText) {
                     const func = new Function(script.innerText);
 
                     func();
-                }
-                else {
+                } else {
                     const node = document.createElement('script');
 
                     node.src = script.src;
@@ -1596,13 +1559,13 @@
      */
     EMV.directive('click', {
         bind : function(element, parameters, model) {
-            let action = model.$parseDirectiveGetterParameters(parameters);
+            const action = model.$parseDirectiveGetterParameters(parameters);
 
             element.onclick = function(event) {
-                let ctx = model.$getContext(element);
-                let result = action(ctx, event);
+                const ctx = model.$getContext(element);
+                const result = action(ctx, event);
 
-                if(typeof result === 'function') {
+                if (typeof result === 'function') {
                     result.call(ctx.$this, ctx, event);
                 }
             };
@@ -1611,17 +1574,17 @@
 
     EMV.directive('on', {
         bind : function(element, parameters, model) {
-            let parser = model.$parseDirectiveGetterParameters(parameters),
-                events = parser(model.$getContext(element));
+            const parser = model.$parseDirectiveGetterParameters(parameters);
+            const events = parser(model.$getContext(element));
 
 
-            if(typeof events !== 'object') {
+            if (typeof events !== 'object') {
                 return;
             }
 
-            Object.keys(events).forEach(function(event) {
-                let action = events[event],
-                    listener = `on${event}`;
+            Object.keys(events).forEach((event) => {
+                const action = events[event];
+                const listener = `on${event}`;
 
                 element[listener] = function(event) {
                     action(model.$getContext(element), event);
@@ -1632,15 +1595,17 @@
 
     EMV.directive('submit', {
         bind : function(element, parameters, model) {
-            if(element.nodeName.toLowerCase() !== 'form') {
+            if (element.nodeName.toLowerCase() !== 'form') {
                 throw new EMVError('submit directive can be applied only on form tags');
             }
-            let action = model.$parseDirectiveGetterParameters(parameters);
+            const action = model.$parseDirectiveGetterParameters(parameters);
 
-            element.addEventListener('submit', function(event) {
-                let result = action(model.$getContext(element));
+            element.addEventListener('submit', (event) => {
+                event.preventDefault();
 
-                if(typeof result === 'function') {
+                const result = action(model.$getContext(element));
+
+                if (typeof result === 'function') {
                     result(model.$getContext(element), event);
                 }
             });
@@ -1660,10 +1625,10 @@
     function initElementProperties(element, model) {
         element.$before = [];
 
-        if(element.previousElementSibling) {
+        if (element.previousElementSibling) {
             element.$before = [element.previousElementSibling];
 
-            if(element.previousElementSibling.$before) {
+            if (element.previousElementSibling.$before) {
                 element.$before = element.$before.concat(element.previousElementSibling.$before);
             }
         }
@@ -1700,49 +1665,86 @@
         update : function(meta, parameters, model) {
             const element = meta.$initialElement;
             const param = model.$getDirectiveValue(parameters, element);
+            let isObject = false;
 
-            if(!param) {
+            if (!param) {
                 // The directive parameters render an empty value, quit the directive
                 return;
             }
 
-            let list = param && Array.from('$data' in param ? param.$data || [] : param) || [];
+            let list = param.$data || param;
 
-            list = list.filter((item) => item !== undefined && item !== null);
+            if (isPrimitive(list)) {
+                return;
+            }
 
-            // Filter the list
-            if(param.$filter) {
-                list = list.filter(param.$filter);
+            if (Array.isArray(list)) {
+                // The input is an array
+                // Filter the list
+                list = list.filter((item) => {
+                    if (item === undefined || item === null) {
+                        return false;
+                    }
+
+                    if (param.$filter && !param.$filter(item)) {
+                        return false;
+                    }
+
+                    return true;
+                });
+            } else {
+                isObject = true;
+                const values = Object.keys(list)
+
+                .filter((key) => {
+                    const item = list[key];
+
+                    if (item === undefined || item === null) {
+                        return false;
+                    }
+
+                    if (param.$filter && !param.$filter(item)) {
+                        return false;
+                    }
+
+                    return true;
+                })
+                .map((key) => {
+                    list[key].$key = key;
+
+                    return list[key];
+                });
+
+                list = values;
             }
 
             // Order the list
-            if(param.$sort) {
-                if(typeof param.$sort === 'function') {
+            if (param.$sort) {
+                if (typeof param.$sort === 'function') {
                     list.sort(param.$sort);
-                }
-                else {
-                    list.sort(function(item1, item2) {
+                } else {
+                    list.sort((item1, item2) => {
                         return item1[param.$sort] < item2[param.$sort] ? -1 : 1;
                     });
                 }
             }
 
-            if(param.$order && param.$order < 0) {
+            if (param.$order && param.$order < 0) {
                 list.reverse();
             }
 
-            let offset = param.$offset || 0,
-                end = offset + (param.$limit || list.length);
+            const offset = param.$offset || 0;
+            const end = offset + (param.$limit || list.length);
 
             list = list.slice(offset, end);
 
             // Remove the nodes that are not present anymore in the list
-            let clones = element.$clones.slice();
+            const clones = element.$clones.slice();
 
             clones.forEach((clone) => {
-                if(list.indexOf(clone.$$item) === -1 || !clone.$context) {
+                if (list.indexOf(clone.$$item) === -1 || !clone.$context) {
                     model.$clean(clone);
-                    if(clone.parentNode && clone.parentNode.contains(clone)) {
+                    if (clone.parentNode && clone.parentNode.contains(clone)) {
                         clone.parentNode.removeChild(clone);
                     }
                 }
@@ -1750,7 +1752,7 @@
             element.$clones = [];
 
             // Add new items and move the one that need to be moved
-            list.forEach(function(item, index) {
+            list.forEach((item, index) => {
                 const itemPreviousIndex = clones.findIndex((clone) => {
                     return clone.$$item === item;
                 });
@@ -1760,13 +1762,13 @@
                 .concat(meta)
                 .concat(element.$before);
 
-                if(itemPreviousIndex !== -1) {
+                if (itemPreviousIndex !== -1) {
                     // The item already exists
-                    let existingClone = clones[itemPreviousIndex];
+                    const existingClone = clones[itemPreviousIndex];
 
                     element.$clones.push(existingClone);
 
-                    if(itemPreviousIndex === index) {
+                    if (itemPreviousIndex === index) {
                         // Nothing to do
                         return;
                     }
@@ -1781,8 +1783,8 @@
 
 
                 // The item does not exist, create it
-                let additionalProperties = {
-                    $index : index
+                const additionalProperties = {
+                    $index : isObject ? item.$key : index
                 };
 
                 if (param.$item) {
@@ -1801,7 +1803,7 @@
                 clone.$before = before;
                 // Copy the base element directives on the clone, except 'each', to avoid infinite loop
                 Object.keys(element.$directives).forEach((name) => {
-                    if(name !== 'each') {
+                    if (name !== 'each') {
                         const uid = element.$directives[name];
 
                         model.$setElementDirective(clone, name, model.$directives[uid].parameters);
@@ -1813,7 +1815,7 @@
 
                 clone.innerHTML = model.$templates[element.$templateName];
 
-                if(clone.childNodes) {
+                if (clone.childNodes) {
                     Array.from(clone.childNodes).forEach((child) => {
                         model.$parse(child);
                     });
@@ -1833,11 +1835,11 @@
         },
 
         update : function(element, parameters, model) {
-            let value = Boolean(model.$getDirectiveValue(parameters, element));
+            const value = Boolean(model.$getDirectiveValue(parameters, element));
 
             model.$insertRemoveElement(element, value);
 
-            if(value) {
+            if (value) {
                 model.$render(element, ['if']);
             }
         }
@@ -1849,11 +1851,11 @@
         },
 
         update : function(element, parameters, model) {
-            let value = model.$getDirectiveValue(parameters, element);
+            const value = model.$getDirectiveValue(parameters, element);
 
             model.$insertRemoveElement(element, !value);
 
-            if(!value) {
+            if (!value) {
                 model.$render(element, ['unless']);
             }
         }
@@ -1865,23 +1867,21 @@
         },
         update : function(element, parameters, model) {
             let context;
-            let additionalProperties = {};
+            const additionalProperties = {};
 
-            if(element === model.$rootElement) {
+            if (element === model.$rootElement) {
                 context = model.$getDirectiveValue(parameters, element, model);
-            }
-            else if(element.$parent) {
+            } else if (element.$parent) {
                 model.$removeContext(element);
                 context = model.$getDirectiveValue(parameters, element.$parent);
-            }
-            else {
+            } else {
                 model.$stopRenderingPropagation(element);
 
                 return;
             }
 
-            if(context && '$data' in context) {
-                if('$as' in context) {
+            if (context && '$data' in context) {
+                if ('$as' in context) {
                     additionalProperties[context.$as] = context.$data;
                 }
 
@@ -1889,7 +1889,7 @@
             }
 
 
-            if(context) {
+            if (context) {
                 // Remove the previous context
                 model.$removeContext(element);
 
@@ -1898,7 +1898,7 @@
 
                 model.$insertRemoveElement(element, true);
 
-                if(element.childNodes) {
+                if (element.childNodes) {
                     Array.from(element.childNodes).forEach((child) => {
                         model.$clean(child);
                     });
@@ -1906,15 +1906,14 @@
 
                 element.innerHTML = model.$templates[element.$templateName];
 
-                if(element.childNodes) {
+                if (element.childNodes) {
                     Array.from(element.childNodes).forEach((child) => {
                         model.$parse(child);
                     });
                 }
 
                 model.$render(element, ['with']);
-            }
-            else {
+            } else {
                 model.$insertRemoveElement(element, false);
             }
         }
@@ -1922,13 +1921,13 @@
 
     EMV.directive('template', {
         update : function(element, parameters, model) {
-            if(!document.documentElement.contains(element)) {
+            if (!document.documentElement.contains(element)) {
                 return;
             }
 
-            let templateName = model.$getDirectiveValue(parameters, element);
+            const templateName = model.$getDirectiveValue(parameters, element);
 
-            let template = model.$templates[templateName] || '';
+            const template = model.$templates[templateName] || '';
 
             // Insert the template
             element.innerHTML = template;
@@ -1936,12 +1935,11 @@
             const scripts = element.querySelectorAll('script');
 
             Array.from(scripts).forEach((script) => {
-                if(script.innerText) {
+                if (script.innerText) {
                     const func = new Function(script.innerText);
 
                     func();
-                }
-                else {
+                } else {
                     const node = document.createElement('script');
 
                     node.src = script.src;
@@ -1951,7 +1949,7 @@
             });
 
             // Parse and render the content
-            if(element.childNodes) {
+            if (element.childNodes) {
                 Array.from(element.childNodes).forEach((child) => {
                     model.$parse(child);
                 });
@@ -1981,7 +1979,7 @@
 
     // Put the first character upper case, then the following lowercases
     EMV.transform('ucfirst', (value) => {
-        if(typeof value !== 'string') {
+        if (typeof value !== 'string') {
             return value;
         }
 
@@ -1991,7 +1989,7 @@
 
     // Put each word with a capital first letter
     EMV.transform('ucwords', (value) => {
-        if(typeof value !== 'string') {
+        if (typeof value !== 'string') {
             return value;
         }
 
@@ -2007,21 +2005,21 @@
 
     // Format a number
     EMV.transform('number', (value, parameters) => {
-        if(typeof value !== 'number') {
+        if (typeof value !== 'number') {
             return value;
         }
 
         let result = value;
 
-        if(parameters.decimals !== undefined) {
+        if (parameters.decimals !== undefined) {
             result = result.toFixed(parameters.decimals);
         }
 
-        if(parameters.thousandSep) {
+        if (parameters.thousandSep) {
             result = result.replace(/\B(?=(?:\d{3})+(?!\d))/g, parameters.thousandSep);
         }
 
-        if(parameters.decimalSep) {
+        if (parameters.decimalSep) {
             result = result.replace('.', parameters.decimalSep);
         }
 
@@ -2036,7 +2034,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value    : '3.2.0',
+        value    : '3.2.1',
         writable : false
     });
 
@@ -2051,7 +2049,7 @@
     const originalIsArray = Array.isArray;
 
     Array.isArray = function(variable) {
-        if(variable instanceof EMVObservableArray) {
+        if (variable instanceof EMVObservableArray) {
             return true;
         }
 

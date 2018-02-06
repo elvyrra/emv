@@ -1,6 +1,6 @@
 {
   "name": "emv",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "EMV is a light and powerful two-way data binding system",
   "main": "./dist/emv.js",
   "directories": {
@@ -23,6 +23,7 @@
     "babel-preset-env": "^1.1.8",
     "babel-preset-es2015-script": "^1.1.0",
     "chai": "^3.5.0",
+    "chai-as-promised": "^7.1.1",
     "chai-cheerio": "^1.0.0",
     "chai-jquery": "^2.0.0",
     "cheerio": "^0.22.0",
@@ -38,5 +39,8 @@
     "pre-git": {
       "commit-msg": "simple"
     }
+  },
+  "release": {
+    "analyzeCommits": "simple-commit-message"
   }
 }

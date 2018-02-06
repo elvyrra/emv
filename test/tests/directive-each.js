@@ -12,7 +12,21 @@ describe('each directive', () => {
                 list : [
                     {label : 'one'},
                     {label : 'two'}
-                ]
+                ],
+                obj : {
+                    first : {
+                        label : 'one'
+                    },
+                    second : {
+                        label : 'two'
+                    },
+                    third : {
+                        label : 'three'
+                    },
+                    fourth : {
+                        label : 'four'
+                    }
+                }
             }
         });
 
@@ -34,23 +48,23 @@ describe('each directive', () => {
     });
 
     it('check each directive', () => {
-        expect($('li').length).to.equal(2);
-        expect($('li').get(0).innerText).to.equal('one');
-        expect($('li').get(1).innerText).to.equal('two');
+        expect($('li.list-item').length).to.equal(2);
+        expect($('li.list-item').get(0).innerText).to.equal('one');
+        expect($('li.list-item').get(1).innerText).to.equal('two');
 
         emv.list.push({
             label : 'three'
         });
 
-        expect($('li').length).to.equal(3);
-        expect($('li').get(0).innerText).to.equal('one');
-        expect($('li').get(1).innerText).to.equal('two');
-        expect($('li').get(2).innerText).to.equal('three');
+        expect($('li.list-item').length).to.equal(3);
+        expect($('li.list-item').get(0).innerText).to.equal('one');
+        expect($('li.list-item').get(1).innerText).to.equal('two');
+        expect($('li.list-item').get(2).innerText).to.equal('three');
 
         emv.list.splice(0, 1);
-        expect($('li').length).to.equal(2);
-        expect($('li').get(0).innerText).to.equal('two');
-        expect($('li').get(1).innerText).to.equal('three');
+        expect($('li.list-item').length).to.equal(2);
+        expect($('li.list-item').get(0).innerText).to.equal('two');
+        expect($('li.list-item').get(1).innerText).to.equal('three');
     });
 
     it('check each directive with filter, sort, order and item', () => {
@@ -92,6 +106,14 @@ describe('each directive', () => {
         expect($('button').get(2).innerText).to.equal('one');
         expect($('button').get(3).innerText).to.equal('three');
         expect($('button').get(4).innerText).to.equal('two');
+    });
+
+
+    it('Check each directive with an object', () => {
+        expect($('li.obj-item').length).to.equal(3);
+        expect($('li.obj-item').get(0).innerText).to.equal('second');
+        expect($('li.obj-item').get(1).innerText).to.equal('third');
+        expect($('li.obj-item').get(2).innerText).to.equal('fourth');
     });
 
     afterEach('clean emv binding', () => {
