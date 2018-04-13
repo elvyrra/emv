@@ -1,7 +1,7 @@
 /*global define, module, exports*/
 
 /**
- * emv.js 3.2.2
+ * emv.js 3.2.3
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -276,17 +276,39 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             /**
              * Add a computed to the EMVObservable instance
-             * @param {string} key     The variable name
-             * @param {Object} options The computed data. A function for a read-only computed,
-             *                         an object with 'read' and 'write' properties for a read write computed
+             * @param {string} key       The variable name
+             * @param {Object} options   The computed data. A function for a read-only computed,
+             *                           an object with 'read' and 'write' properties for a read write computed
+             * @param {boolean} autoload If set to true, the the value is calculated automatically when creating the computed
              */
 
         }, {
             key: '$addComputed',
             value: function $addComputed(key, options) {
+                var autoload = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
                 this.$computed[key] = new EMVComputed(options, this);
 
                 this.$observe(key);
+
+                if (autoload) {
+                    this.$loadComputed(key);
+                }
+            }
+
+            /**
+             * Calculate the computed value and set it to the 'key' property
+             * @param   {string} key The computed name
+             */
+
+        }, {
+            key: '$loadComputed',
+            value: function $loadComputed(key) {
+                if (this.$computed[key].reader) {
+                    this[key] = this.$computed[key].reader(this);
+                } else {
+                    this[key] = undefined;
+                }
             }
 
             /**
@@ -681,16 +703,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             if (options.computed) {
                 Object.keys(options.computed).forEach(function (key) {
-                    _this11.$addComputed(key, options.computed[key]);
+                    _this11.$addComputed(key, options.computed[key], false);
                 });
             }
 
             Object.keys(_this11.$computed).forEach(function (key) {
-                if (_this11.$computed[key].reader) {
-                    _this11[key] = _this11.$computed[key].reader(_this11);
-                } else {
-                    _this11[key] = undefined;
-                }
+                _this11.$loadComputed(key);
             });
             return _this11;
         }
@@ -2177,7 +2195,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.2.2',
+        value: '3.2.3',
         writable: false
     });
 
