@@ -1,7 +1,7 @@
 /*global define, module, exports*/
 
 /**
- * emv.js 3.2.1
+ * emv.js 3.2.2
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -250,6 +250,19 @@
             this.$observed.add(key);
 
             this[key] = initValue;
+        }
+
+
+        /**
+         * Add a computed to the EMVObservable instance
+         * @param {string} key     The variable name
+         * @param {Object} options The computed data. A function for a read-only computed,
+         *                         an object with 'read' and 'write' properties for a read write computed
+         */
+        $addComputed(key, options) {
+            this.$computed[key] = new EMVComputed(options, this);
+
+            this.$observe(key);
         }
 
 
@@ -583,9 +596,7 @@
 
             if (options.computed) {
                 Object.keys(options.computed).forEach((key) => {
-                    this.$computed[key] = new EMVComputed(options.computed[key], this);
-
-                    this.$observe(key);
+                    this.$addComputed(key, options.computed[key]);
                 });
             }
 
@@ -2034,7 +2045,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value    : '3.2.1',
+        value    : '3.2.2',
         writable : false
     });
 

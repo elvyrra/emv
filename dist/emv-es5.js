@@ -1,7 +1,7 @@
 /*global define, module, exports*/
 
 /**
- * emv.js 3.2.1
+ * emv.js 3.2.2
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -272,6 +272,21 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                 this.$observed.add(key);
 
                 this[key] = initValue;
+            }
+
+            /**
+             * Add a computed to the EMVObservable instance
+             * @param {string} key     The variable name
+             * @param {Object} options The computed data. A function for a read-only computed,
+             *                         an object with 'read' and 'write' properties for a read write computed
+             */
+
+        }, {
+            key: '$addComputed',
+            value: function $addComputed(key, options) {
+                this.$computed[key] = new EMVComputed(options, this);
+
+                this.$observe(key);
             }
 
             /**
@@ -666,9 +681,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             if (options.computed) {
                 Object.keys(options.computed).forEach(function (key) {
-                    _this11.$computed[key] = new EMVComputed(options.computed[key], _this11);
-
-                    _this11.$observe(key);
+                    _this11.$addComputed(key, options.computed[key]);
                 });
             }
 
@@ -2164,7 +2177,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.2.1',
+        value: '3.2.2',
         writable: false
     });
 
