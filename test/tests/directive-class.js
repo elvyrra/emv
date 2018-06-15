@@ -6,9 +6,11 @@ const utils = require('../utils');
 describe('class directive', () => {
     const emv = new EMV({
         data : {
-            class : 'my-class',
-            class3 : false,
-            class4 : true
+            class     : 'my-class',
+            class3    : false,
+            class4    : true,
+            id        : 2,
+            condition : true
         }
     });
 
@@ -44,6 +46,25 @@ describe('class directive', () => {
             emv.class3 = true;
             expect($('#many-classes')).to.have.class('class4');
             expect($('#many-classes')).to.have.class('class3');
+        });
+    });
+
+
+    it('Test a complex class string', () => {
+        return utils.loadPage('class.html')
+
+        .then(($) => {
+            emv.$apply();
+
+            expect($('#complex-classes')).to.have.class('static-class-2');
+            expect($('#complex-classes')).to.have.class('conditional');
+
+            emv.id = 3;
+            expect($('#complex-classes')).to.have.class('static-class-3');
+            expect($('#complex-classes')).to.not.have.class('static-class-2');
+
+            emv.condition = false;
+            expect($('#complex-classes')).to.not.have.class('conditional');
         });
     });
 

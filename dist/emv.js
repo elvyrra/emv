@@ -1,7 +1,7 @@
 /*global define, module, exports*/
 
 /**
- * emv.js 3.2.3
+ * emv.js 3.2.4
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -1240,7 +1240,7 @@
 
             if (typeof value === 'object') {
                 Object.keys(value).forEach((classname) => {
-                    const classes = classname.split(' ');
+                    const classes = classname.trim().split(/ +/);
                     const classList = element.classList;
 
                     classes.forEach((cl) => {
@@ -2058,7 +2058,7 @@
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value    : '3.2.3',
+        value    : '3.2.4',
         writable : false
     });
 

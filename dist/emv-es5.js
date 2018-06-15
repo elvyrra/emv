@@ -1,7 +1,7 @@
 /*global define, module, exports*/
 
 /**
- * emv.js 3.2.3
+ * emv.js 3.2.4
  *
  * @author Elvyrra S.A.S
  * @license http://rem.mit-license.org/ MIT
@@ -1391,7 +1391,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
             if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
                 Object.keys(value).forEach(function (classname) {
-                    var classes = classname.split(' ');
+                    var classes = classname.trim().split(/ +/);
                     var classList = element.classList;
 
                     classes.forEach(function (cl) {
@@ -2195,7 +2195,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
     // Define the version
     Object.defineProperty(EMV, 'version', {
-        value: '3.2.3',
+        value: '3.2.4',
         writable: false
     });
 
